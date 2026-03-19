@@ -1,0 +1,80 @@
+\section{Literature Review}
+\label{sec:literature}
+
+This paper draws on several distinct strands of the finance literature.
+We synthesize insights from structural credit models, closed-end fund pricing, convertible bond theory, cryptocurrency finance, and capital structure research to build a framework suited to the unique characteristics of Strategy Inc (formerly MicroStrategy) as a BTC-backed equity vehicle.
+
+\subsection{Structural Credit Models}
+
+The foundational framework for linking firm asset values to security prices originates with \citet{merton1974pricing}, who models equity as a European call option on the firm's assets with a strike equal to the face value of debt.
+This insight---that limited liability creates option-like payoffs for equity holders---is central to our model's treatment of NAV with a limited liability floor: $\text{NAV}_t = (H_t S_t - D_t)^+$.
+
+\citet{black1976valuing} extend Merton's framework to incorporate safety covenants and subordination, both relevant to Strategy's multi-layered capital structure with preferred stock tranches of differing seniority.
+\citet{leland1994corporate} and \citet{leland1996optimal} develop models with endogenous bankruptcy and optimal capital structure, introducing the trade-off between tax shields and distress costs that informs our survival probability analysis.
+More recently, \citet{huang2004structural} provide empirical evidence on the performance of structural models, finding that they substantially underpredict credit spreads---the so-called ``credit spread puzzle''---suggesting that factors beyond pure leverage drive credit risk.
+
+In our setting, the single-asset nature of Strategy's balance sheet (essentially only BTC) makes structural models particularly apt: the firm's asset volatility is directly observable via Bitcoin price dynamics, unlike diversified corporations where asset volatility must be inferred.
+However, the presence of multiple layers of preferred stock with distinct priority claims extends the standard two-class (debt/equity) Merton framework into a multi-tranche setting analogous to structured credit.
+
+\subsection{NAV Premium and Discount Dynamics}
+
+Strategy trades at a persistent premium to its Bitcoin net asset value, a phenomenon with close parallels to the closed-end fund (CEF) pricing puzzle.
+\citet{lee1991investor} propose that investor sentiment drives CEF discounts and premia, with noise trader risk preventing arbitrage from eliminating mispricings.
+\citet{pontiff1995closed} documents that CEF premia predict future returns, consistent with mean-reversion---the empirical pattern we capture through our Ornstein--Uhlenbeck premium process $\pi_t$.
+
+\citet{cherkes2009closed} offer a liquidity-based explanation: CEFs provide access to illiquid assets, justifying a premium when the underlying is hard to access directly.
+This theory has particular relevance to Strategy, which offers leveraged, operationally-managed BTC exposure that individual investors may find difficult or costly to replicate, especially pre-2024 when spot Bitcoin ETFs were unavailable in the United States.
+\citet{dimson1999closed} provide a comprehensive survey of CEF pricing anomalies, noting that premia tend to be larger for funds holding exotic or hard-to-value assets---a characterization that arguably applies to Bitcoin.
+
+The introduction of spot Bitcoin ETFs in January 2024 \citep{alexander2024bitcoin} represents a structural break in the accessibility of BTC exposure, potentially compressing Strategy's premium over time.
+Our mean-reverting premium model with regime-dependent long-run mean $\theta$ can accommodate such shifts.
+The premium dynamics we observe---with $\pi_t$ positively correlated with BTC returns ($\rho > 0$)---echo the procyclical sentiment patterns documented in the CEF literature.
+
+\subsection{Bitcoin and Cryptocurrency Finance}
+
+The academic literature on Bitcoin pricing has grown rapidly since \citet{nakamoto2008bitcoin}.
+\citet{liu2021risks} establish that cryptocurrency returns are driven by network and momentum factors distinct from traditional asset pricing factors, implying that BTC exposure introduces novel risk dimensions to Strategy's equity.
+\citet{makarov2020trading} document arbitrage frictions in cryptocurrency markets that can amplify volatility, relevant to our BTC price dynamics specification.
+
+On volatility modeling, \citet{katsiampa2017volatility} compares GARCH specifications for Bitcoin and finds that models with both short- and long-run volatility components best capture BTC dynamics.
+\citet{biais2023equilibrium} provide a general equilibrium model of Bitcoin pricing that links fundamentals (mining costs, network adoption) to price, offering theoretical grounding for the drift parameter $\mu_S$ in our $\mathbb{P}$-measure BTC dynamics.
+The jump-diffusion specification we employ for BTC prices under $\mathbb{Q}$ follows \citet{merton1976option} and \citet{kou2002jump}, accommodating the well-documented fat tails and discontinuous price movements in cryptocurrency markets \citep{griffin2020bitcoin}.
+
+\subsection{Bitcoin as a Corporate Treasury Asset}
+
+Strategy's pioneering adoption of Bitcoin as a treasury reserve asset, beginning in August 2020, has spawned a small but growing literature.
+\citet{vanelli2024bitcoin} study MicroStrategy's treasury strategy and its effects on firm valuation, documenting the reflexive relationship between BTC acquisitions, equity premium, and subsequent capital raises that we formalize as the ``flywheel'' mechanism.
+\citet{amin2024corporate} examine more broadly whether corporate cryptocurrency holdings affect firm value, finding heterogeneous effects depending on the scale of holdings relative to firm size.
+
+Our model's BTC holding dynamics---with accumulation rate $\alpha$ driven by the premium $\pi_t^+$ and discrete financing jumps---formalizes the strategic feedback loop whereby a high premium enables accretive capital raises, which increase BTC per share, which supports the premium.
+This is a novel contribution: while practitioner analyses have described this flywheel qualitatively, we provide the first stochastic model of its dynamics suitable for Monte Carlo simulation and quantitative indicator extraction.
+
+\subsection{Convertible Bond Pricing and Hybrid Securities}
+
+Strategy's capital structure includes approximately \$8.2 billion in convertible notes alongside five series of preferred stock with varying terms.
+The convertible bond pricing literature, beginning with \citet{brennan1977convertible} and \citet{ingersoll1977contingent}, provides the theoretical basis for valuing these hybrid securities.
+\citet{tsiveriotis1998valuing} extend the framework to incorporate credit risk, decomposing convertible value into debt and equity components---an approach we use to define ``effective debt'' $D_t^{\text{eff}}$ that adjusts for deep-in-the-money convertibles.
+\citet{ammann2003pricing} provide empirical evidence that convertible bonds are systematically underpriced, a finding with implications for the true leverage embedded in Strategy's capital structure.
+
+The preferred stock layer adds further complexity.
+\citet{kallberg2013preferred} document that preferred stocks exhibit hybrid risk characteristics, with returns driven by both interest rate and equity market factors.
+Strategy's preferred tranches span from pure fixed-income (STRF, STRD) to equity-linked (STRK with conversion into MSTR common), with the variable-rate STRC representing an innovative instrument that adjusts dividends to stabilize price near par---a mechanism without close precedent in the academic literature.
+
+\subsection{Capital Structure and Leverage}
+
+The classical capital structure theories of \citet{modigliani1958cost} and \citet{myers1984capital} provide the backdrop against which Strategy's aggressive leveraging of a single volatile asset must be understood.
+\citet{baker2002market} document that firms time equity issuance to exploit high valuations---precisely the behavior we model through premium-dependent financing intensity $\lambda_M(\pi_t)$.
+
+Strategy's capital structure is unusual in several respects that extend standard theory:
+(i)~the firm's assets are a single, publicly-traded, highly volatile cryptocurrency;
+(ii)~leverage is deliberately and systematically increased to accumulate more of the same asset;
+(iii)~the financing flywheel creates a reflexive feedback loop between equity valuation and asset accumulation;
+and (iv)~the multi-layered preferred stock structure creates a priority waterfall with complex interactions between dividend obligations, conversion optionality, and residual equity claims.
+
+These features motivate our multi-tranche extension of the Merton framework with endogenous asset accumulation, a contribution at the intersection of structural credit modeling and corporate treasury management.
+
+\subsection{Simulation Methods}
+
+Our quantitative indicators---including the Implied Funding Requirement Distribution (IFRD), per-share Implied BTC Growth Rate (IBGR), and survival probabilities---require Monte Carlo simulation of correlated stochastic processes.
+We follow the methods described in \citet{glasserman2004monte}, employing Cholesky decomposition for correlated Brownian motions and thinning algorithms for state-dependent Poisson jump processes.
+The Ornstein--Uhlenbeck process for the log-premium follows the exact discretization of \citet{vasicek1977equilibrium}, ensuring that our discrete-time simulation preserves the known transition density of the continuous-time process.
