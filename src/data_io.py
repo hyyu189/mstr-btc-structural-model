@@ -182,6 +182,29 @@ def load_mstr_balance_sheet_basic(
     return df.set_index("datadate")[["debt_total_usd"]]
 
 
+def load_preferred_stock(
+    path: str | Path = DATA_ROOT / "data" / "preferred_stock.csv",
+) -> pd.DataFrame:
+    """
+    Load preferred stock data (STRK, STRF, STRC, STRD, STRE).
+
+    Returns DataFrame with columns: ticker, name, liquidation_pref_per_share,
+    dividend_rate_pct, annual_dividend_per_share, shares_outstanding,
+    is_convertible, conversion_ratio_to_mstr, seniority_rank,
+    total_liquidation_value, total_annual_dividend.
+    """
+    df = pd.read_csv(path)
+    df["is_convertible"] = df["is_convertible"].astype(bool)
+    df["shares_outstanding"] = df["shares_outstanding"].astype(float)
+    df["liquidation_pref_per_share"] = df["liquidation_pref_per_share"].astype(float)
+    df["annual_dividend_per_share"] = df["annual_dividend_per_share"].astype(float)
+    df["conversion_ratio_to_mstr"] = df["conversion_ratio_to_mstr"].astype(float)
+
+    df["total_liquidation_value"] = df["liquidation_pref_per_share"] * df["shares_outstanding"]
+    df["total_annual_dividend"] = df["annual_dividend_per_share"] * df["shares_outstanding"]
+    return df
+
+
 def load_btc_daily() -> pd.DataFrame:
     """
     Load daily BTC-USD prices from CryptoDataDownload (Binance BTCUSDT daily).
@@ -203,4 +226,3 @@ def load_btc_daily() -> pd.DataFrame:
         .sort_index()
     )
     return btc_daily
-

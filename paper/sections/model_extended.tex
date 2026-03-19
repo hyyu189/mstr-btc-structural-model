@@ -1,0 +1,598 @@
+% model_extended.tex — Extended Mathematical Framework
+% Capital Stack, Priority Waterfall, Preferred Stock, Conversion Optionality
+%
+% Extends the base model in plan.tex (BTC dynamics, OU premium, holding flywheel,
+% ILE/TEE/PMRI/IBGR/IFRD) with Strategy's multi-layered capital structure.
+
+\section{Extended Structural Model: Capital Stack and Preferred Equity}\label{sec:model_extended}
+
+We extend the single-debt baseline of Section~2 to accommodate Strategy's
+multi-layered capital structure, which as of early 2026 includes senior debt,
+convertible bonds, multiple series of perpetual preferred stock (both
+convertible and non-convertible), and common equity.  The extensions below
+preserve all state variables and dynamics from the base model while enriching
+the liability side and its implications for leverage, survival, and BTC
+accretion.
+
+%% ====================================================================
+\subsection{Capital Stack and Priority Waterfall}\label{subsec:waterfall}
+
+\begin{definition}[Capital Stack]\label{def:capital_stack}
+At time $t$ the firm's capital structure comprises:
+\begin{enumerate}
+  \item \textbf{Senior debt} $D_s(t)$: term loans, secured notes, and
+        operating liabilities with contractual priority.
+  \item \textbf{Convertible debt} $D_c(t)$: unsecured convertible notes
+        with face values, coupons, maturities, and equity conversion rights.
+  \item \textbf{Non-convertible perpetual preferred stock} $P_{nc}(t)$:
+        par value of outstanding non-convertible preferred (e.g.\ STRF at
+        10\% cumulative dividend).
+  \item \textbf{Convertible perpetual preferred stock} $P_c(t)$: par value
+        of outstanding convertible preferred (e.g.\ STRK at 8\% cumulative
+        dividend, convertible to 0.1 MSTR per share).
+  \item \textbf{Common equity} $E(t)$: residual claim.
+\end{enumerate}
+\end{definition}
+
+\noindent Total liabilities senior to common equity are
+\begin{equation}\label{eq:total_senior}
+  L_t = D_s(t) + D_c(t) + P_{nc}(t) + P_c(t).
+\end{equation}
+
+\begin{definition}[Liquidation Waterfall]\label{def:waterfall}
+In a hypothetical liquidation at time $t$ with asset value
+$A_t = H_t S_t$, claims are satisfied in strict priority:
+\begin{equation}\label{eq:waterfall}
+  \underbrace{D_s}_{\text{senior debt}}
+  \;\succ\;
+  \underbrace{D_c}_{\text{convertible debt}}
+  \;\succ\;
+  \underbrace{P_{nc}}_{\text{non-conv.\ pfd.}}
+  \;\succ\;
+  \underbrace{P_c}_{\text{conv.\ pfd.}}
+  \;\succ\;
+  \underbrace{E}_{\text{common}}.
+\end{equation}
+Each layer $\ell$ receives $\min(A_t^{(\ell)},\, C_\ell)$, where $C_\ell$ is
+the face claim and $A_t^{(\ell)}$ is the residual asset value available after
+all senior layers are paid:
+\begin{align}
+  A_t^{(1)} &= A_t, &
+  R_s(t)     &= \min\bigl(A_t^{(1)},\, D_s(t)\bigr), \label{eq:wf_senior}\\
+  A_t^{(2)} &= \bigl(A_t^{(1)} - D_s(t)\bigr)^+, &
+  R_{dc}(t)  &= \min\bigl(A_t^{(2)},\, D_c(t)\bigr), \\
+  A_t^{(3)} &= \bigl(A_t^{(2)} - D_c(t)\bigr)^+, &
+  R_{nc}(t)  &= \min\bigl(A_t^{(3)},\, P_{nc}(t)\bigr), \\
+  A_t^{(4)} &= \bigl(A_t^{(3)} - P_{nc}(t)\bigr)^+, &
+  R_c(t)     &= \min\bigl(A_t^{(4)},\, P_c(t)\bigr), \\
+  A_t^{(5)} &= \bigl(A_t^{(4)} - P_c(t)\bigr)^+, &
+  E_t^{\text{res}} &= A_t^{(5)}. \label{eq:wf_equity}
+\end{align}
+\end{definition}
+
+\noindent The base-model NAV generalizes to
+\begin{equation}\label{eq:nav_extended}
+  \mathrm{NAV}_t = \bigl(A_t - L_t\bigr)^+
+  = \bigl(H_t S_t - D_s(t) - D_c(t) - P_{nc}(t) - P_c(t)\bigr)^+,
+\end{equation}
+and the log-premium identity becomes
+\begin{equation}\label{eq:pi_extended}
+  \pi_t = \log\!\left(\frac{E_t}{\mathrm{NAV}_t^{\mathrm{clip}}}\right),
+  \qquad
+  \mathrm{NAV}_t^{\mathrm{clip}} = \max\bigl(A_t - L_t,\, \varepsilon\bigr).
+\end{equation}
+
+\begin{remark}
+For periods where some convertible debt is deep in-the-money, one may define
+an \emph{effective liability}
+$L_t^{\mathrm{eff}} = D_s(t) + D_c^{\mathrm{eff}}(t) + P_{nc}(t) + P_c(t)$,
+where $D_c^{\mathrm{eff}}(t)$ discounts the equity-like component
+(cf.\ Section~2.5 of the base model).  This keeps the waterfall
+well-ordered while avoiding double-counting of the conversion value.
+\end{remark}
+
+%% ====================================================================
+\subsection{Perpetual Preferred Stock Dynamics}\label{subsec:preferred}
+
+Strategy has issued multiple series of perpetual preferred stock with fixed
+cumulative dividends.  Unlike debt, preferred stock has no maturity; however,
+failure to pay dividends triggers cumulative arrearages and potentially
+accelerated conversion or governance consequences.
+
+\begin{definition}[Preferred Dividend Obligations]\label{def:pfd_divs}
+Let $\mathcal{P} = \{p_1,\ldots,p_M\}$ denote the $M$ outstanding preferred
+series, each with par value $F_{p_i}$, number of shares $n_{p_i}$, and
+contractual annual dividend rate $\delta_{p_i}$.  The aggregate annual
+preferred dividend obligation is
+\begin{equation}\label{eq:agg_pfd_div}
+  \Phi_t = \sum_{i=1}^{M} \delta_{p_i}\, F_{p_i}\, n_{p_i}(t).
+\end{equation}
+For the current capital structure, the dominant terms are:
+\begin{itemize}
+  \item STRK: $\delta_{\mathrm{STRK}} = 0.08$, convertible.
+  \item STRF: $\delta_{\mathrm{STRF}} = 0.10$, non-convertible.
+\end{itemize}
+\end{definition}
+
+\begin{definition}[Dividend Coverage Ratio]\label{def:dcr}
+The \emph{Dividend Coverage Ratio} at time $t$ measures the firm's capacity
+to service preferred dividends from BTC-related cash flows:
+\begin{equation}\label{eq:dcr}
+  \mathrm{DCR}_t
+  = \frac{\Delta A_t^+ + \mathrm{CF}_t^{\mathrm{ops}}}{\Phi_t\,\Delta t},
+\end{equation}
+where $\Delta A_t^+ = \max(\Delta A_t,\, 0)$ captures realized BTC
+appreciation over the period $[t, t+\Delta t]$ and
+$\mathrm{CF}_t^{\mathrm{ops}}$ is operating cash flow from the legacy
+software business.  The firm is in \emph{dividend stress} when
+$\mathrm{DCR}_t < 1$.
+\end{definition}
+
+\begin{proposition}[Extended Distress Threshold]\label{prop:distress}
+Under the extended capital stack, the distress threshold (replacing the
+base-model condition $A_t \le (1+\varepsilon)D_t$) incorporates both
+insolvency and dividend-default risk:
+\begin{equation}\label{eq:distress_ext}
+  A_t \;<\; D_s(t) + D_c(t) + \mathrm{PV}_t\!\bigl(\text{preferred dividends}\bigr)
+  + \varepsilon\bigl(P_{nc}(t) + P_c(t)\bigr),
+\end{equation}
+where the present value of preferred dividends over a horizon $T^*$
+(e.g.\ 10 years) at discount rate $r$ is
+\begin{equation}\label{eq:pv_pfd}
+  \mathrm{PV}_t\!\bigl(\text{preferred dividends}\bigr)
+  = \Phi_t \cdot \frac{1 - e^{-r T^*}}{r}.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+A firm that cannot meet both its hard liabilities (debt) and the present
+value of its soft liabilities (cumulative preferred dividends) will either
+(i) default on preferred dividends, triggering governance and market
+consequences, or (ii) be forced into asset liquidation.  The buffer
+$\varepsilon(P_{nc}+P_c)$ accounts for transaction costs and par-value
+recovery expectations.
+\end{proof}
+
+\begin{definition}[Extended Survival Probability]\label{def:survival_ext}
+Let the extended distress boundary be
+\begin{equation}\label{eq:distress_boundary}
+  \mathcal{B}_t = D_s(t) + D_c(t)
+  + \mathrm{PV}_t\!\bigl(\text{preferred dividends}\bigr)
+  + \varepsilon\bigl(P_{nc}(t) + P_c(t)\bigr).
+\end{equation}
+Define the first-passage time
+\begin{equation}\label{eq:tau_ext}
+  \tau^{\mathrm{ext}} = \inf\bigl\{u \in [0,T] : A_u \le \mathcal{B}_u\bigr\}.
+\end{equation}
+The extended survival probability is
+\begin{equation}\label{eq:surv_ext}
+  \mathbb{P}\!\left(\tau^{\mathrm{ext}} > T\right)
+  \approx
+  \frac{\#\{\text{simulated paths with no hit before } T\}}
+       {\#\{\text{total paths}\}}.
+\end{equation}
+\end{definition}
+
+\noindent The extended survival probability is strictly lower than the
+base-model survival probability for any positive preferred dividend
+obligation, reflecting the additional drag of perpetual fixed-income
+commitments on BTC-leveraged assets.
+
+%% ====================================================================
+\subsection{Conversion Optionality}\label{subsec:conversion}
+
+STRK preferred stock carries an embedded conversion right: each share may
+be converted into $\phi = 0.1$ shares of MSTR common at the holder's
+election.  This creates interplay between the preferred and equity layers.
+
+\begin{definition}[Conversion Terms]\label{def:conversion}
+Let $n_c(t)$ denote the number of outstanding convertible preferred shares
+(STRK) at time $t$, with conversion ratio $\phi$ (shares of MSTR common
+per preferred share).  The \emph{implied conversion strike price} is
+\begin{equation}\label{eq:strike}
+  K_c = \frac{F_c}{\phi},
+\end{equation}
+where $F_c$ is the liquidation preference (par value) per preferred share.
+\end{definition}
+
+\begin{proposition}[Conversion as Embedded American Option]\label{prop:conv_option}
+Each STRK share embeds an American-style call option on MSTR common equity.
+The holder converts when the equity value received exceeds the present value
+of retaining the preferred position:
+\begin{equation}\label{eq:conv_decision}
+  \text{Convert at } t \quad\Longleftrightarrow\quad
+  \phi \cdot P_t > F_c + \frac{\delta_c\, F_c}{r_c},
+\end{equation}
+where $r_c$ is the holder's required yield on the preferred, and the
+right-hand side represents the par value plus the present value of the
+perpetual dividend stream foregone upon conversion.  In a simplified
+``intrinsic value'' framework:
+\begin{equation}\label{eq:conv_intrinsic}
+  \text{Convert when } P_t > K_c = \frac{F_c}{\phi}.
+\end{equation}
+\end{proposition}
+
+\begin{remark}
+In practice, because the preferred dividend provides ongoing income, rational
+holders delay conversion beyond the intrinsic-value trigger.  The optimal
+conversion boundary $P^*(t)$ solves a free-boundary problem analogous to the
+American call with continuous dividends.  For simulation purposes, we use
+the simplified threshold~\eqref{eq:conv_intrinsic} with an optional
+``conversion premium'' multiplier $\psi \ge 1$:
+\begin{equation}\label{eq:conv_trigger}
+  P_t > \psi \cdot K_c.
+\end{equation}
+\end{remark}
+
+\begin{definition}[Post-Conversion Dynamics]\label{def:post_conv}
+When a fraction $\xi_t \in [0,1]$ of convertible preferred shares convert at
+time $t$:
+\begin{align}
+  N_t^{\mathrm{sh}} &\;\longrightarrow\;
+    N_t^{\mathrm{sh}} + \xi_t\, n_c(t)\, \phi,
+    \label{eq:dilution}\\
+  n_c(t) &\;\longrightarrow\; (1-\xi_t)\, n_c(t),
+    \label{eq:pfd_reduction}\\
+  \Phi_t &\;\longrightarrow\;
+    \Phi_t - \xi_t\, \delta_c\, F_c\, n_c(t).
+    \label{eq:div_reduction}
+\end{align}
+Conversion simultaneously \emph{dilutes} common shares
+\eqref{eq:dilution}, \emph{reduces} the preferred overhang
+\eqref{eq:pfd_reduction}, and \emph{lowers} dividend obligations
+\eqref{eq:div_reduction}.
+\end{definition}
+
+\begin{definition}[Conversion-Adjusted NAV]\label{def:ca_nav}
+After accounting for potential conversion of all in-the-money convertible
+preferred shares, the \emph{Conversion-Adjusted NAV} is
+\begin{equation}\label{eq:ca_nav}
+  \mathrm{NAV}_t^{\mathrm{CA}}
+  = \frac{A_t - D_s(t) - D_c(t) - P_{nc}(t)}
+         {N_t^{\mathrm{sh}} + n_c^{\mathrm{ITM}}(t)\,\phi},
+\end{equation}
+where $n_c^{\mathrm{ITM}}(t)$ is the number of convertible preferred shares
+for which $\phi\, P_t > F_c$ (i.e.\ in-the-money).
+\end{definition}
+
+\begin{definition}[Conversion-Adjusted BTC per Share]\label{def:ca_bps}
+The \emph{Conversion-Adjusted BTC per Share} accounts for the maximum
+dilution from all in-the-money conversions:
+\begin{equation}\label{eq:ca_bps}
+  B_t^{\mathrm{CA}}
+  = \frac{H_t}{N_t^{\mathrm{sh}} + n_c^{\mathrm{ITM}}(t)\,\phi}.
+\end{equation}
+This provides a conservative (fully diluted) measure of BTC ownership per
+common share.
+\end{definition}
+
+%% ====================================================================
+\subsection{Multi-Channel Financing Flywheel}\label{subsec:flywheel}
+
+The base model captures BTC accumulation via the holding dynamics
+$dH_t = \alpha\,\pi_t^+\,dt + dH_t^{\mathrm{jump}}$.
+We extend this to disaggregate the financing channels.
+
+\begin{definition}[Multi-Channel Holding Dynamics]\label{def:multichannel}
+BTC accumulation is decomposed by financing source:
+\begin{equation}\label{eq:dH_multi}
+  dH_t = dH_t^{\mathrm{ATM}} + dH_t^{\mathrm{conv}} + dH_t^{\mathrm{pfd}}
+         + dH_t^{\mathrm{ops}},
+\end{equation}
+where:
+\begin{enumerate}
+  \item $dH_t^{\mathrm{ATM}}$: BTC acquired from at-the-market common equity
+        issuance.  Proceeds $= (\text{shares issued}) \times P_t$; BTC
+        purchased $= \text{proceeds} / S_t$.
+  \item $dH_t^{\mathrm{conv}}$: BTC acquired from convertible debt issuance.
+        Proceeds $= D_c^{\mathrm{new}}(t)$; BTC purchased
+        $= D_c^{\mathrm{new}}(t) / S_t$.
+  \item $dH_t^{\mathrm{pfd}}$: BTC acquired from preferred stock issuance.
+        Proceeds $= P^{\mathrm{new}}(t)$; BTC purchased
+        $= P^{\mathrm{new}}(t) / S_t$.
+  \item $dH_t^{\mathrm{ops}}$: BTC acquired from operating cash flows
+        (typically small).
+\end{enumerate}
+\end{definition}
+
+Each channel entails different cost of capital, dilution characteristics,
+and market conditions under which it is accessible.
+
+\begin{proposition}[Channel Selection]\label{prop:channel_select}
+The optimal financing channel depends on the premium $\pi_t$ and market
+conditions.  We model channel intensities as functions of state:
+\begin{align}
+  \lambda_t^{\mathrm{ATM}} &= \lambda_0^{\mathrm{ATM}}\,
+    \mathbf{1}\{\pi_t > \pi^{\mathrm{ATM}}_{\min}\}\,
+    g_{\mathrm{ATM}}(\pi_t),
+    \label{eq:lambda_atm}\\
+  \lambda_t^{\mathrm{conv}} &= \lambda_0^{\mathrm{conv}}\,
+    \mathbf{1}\{\sigma_S(t) > \bar\sigma\}\,
+    g_{\mathrm{conv}}(\pi_t, r_t),
+    \label{eq:lambda_conv}\\
+  \lambda_t^{\mathrm{pfd}} &= \lambda_0^{\mathrm{pfd}}\,
+    g_{\mathrm{pfd}}(\pi_t, \mathrm{DCR}_t),
+    \label{eq:lambda_pfd}
+\end{align}
+where $g_{\cdot}(\cdot)$ are non-negative scaling functions and the
+indicators encode minimum thresholds: ATM issuance requires a positive
+premium, convertible issuance benefits from high BTC volatility (making
+the embedded option more valuable), and preferred issuance is viable when
+dividend coverage is adequate.
+\end{proposition}
+
+\begin{definition}[Weighted Average Cost of BTC Acquisition (WACBA)]%
+\label{def:wacba}
+The \emph{Weighted Average Cost of BTC Acquisition} over the period
+$[0, T]$ accounts for the blended cost of capital across all financing
+channels:
+\begin{equation}\label{eq:wacba}
+  \mathrm{WACBA}_{[0,T]}
+  = \frac{\sum_{j \in \mathcal{C}}
+          c_j \displaystyle\int_0^T S_u\,dH_u^{(j)}}
+         {\displaystyle\int_0^T dH_u},
+\end{equation}
+where $\mathcal{C} = \{\mathrm{ATM},\,\mathrm{conv},\,\mathrm{pfd},\,
+\mathrm{ops}\}$ indexes the channels and $c_j$ is the channel-specific
+cost multiplier that captures dilution and ongoing obligations:
+\begin{align}
+  c_{\mathrm{ATM}} &= 1 + \frac{\Delta N^{\mathrm{sh}}_{\mathrm{ATM}}}
+                               {N_t^{\mathrm{sh}}}\cdot
+                         \frac{H_t\,S_t}{\text{ATM proceeds}},
+                         \label{eq:c_atm}\\
+  c_{\mathrm{conv}} &= 1 + \frac{\text{coupon PV} + \text{conversion dilution PV}}
+                                {\text{convertible proceeds}},
+                                \label{eq:c_conv}\\
+  c_{\mathrm{pfd}} &= 1 + \frac{\mathrm{PV}(\text{preferred dividends})}
+                               {\text{preferred proceeds}},
+                               \label{eq:c_pfd}\\
+  c_{\mathrm{ops}} &= 1. \label{eq:c_ops}
+\end{align}
+\end{definition}
+
+\begin{remark}
+The WACBA generalizes the ``average BTC purchase price'' reported by
+Strategy.  Channels with lower $c_j$ are more efficient per BTC acquired.
+ATM issuance at high premiums can have $c_{\mathrm{ATM}} < 1$ in
+BTC-per-share terms (accretive issuance), while preferred issuance carries
+a perpetual drag via $c_{\mathrm{pfd}}$.
+\end{remark}
+
+%% ====================================================================
+\subsection{Dilution-Adjusted Dynamics}\label{subsec:dilution_adj}
+
+Each financing channel affects the share count differently.  We generalize
+the share-count process from the base model:
+\begin{equation}\label{eq:dN_extended}
+  dN_t^{\mathrm{sh}}
+  = dN_t^{\mathrm{ATM}} + dN_t^{\mathrm{conv\_debt}} + dN_t^{\mathrm{conv\_pfd}},
+\end{equation}
+where:
+\begin{itemize}
+  \item $dN_t^{\mathrm{ATM}} = (\text{ATM proceeds at }t) / P_t$: shares
+        issued via at-the-market program.
+  \item $dN_t^{\mathrm{conv\_debt}}$: shares created upon conversion of
+        convertible bonds.
+  \item $dN_t^{\mathrm{conv\_pfd}} = \xi_t\, n_c(t)\, \phi$: shares created
+        upon conversion of convertible preferred (STRK).
+\end{itemize}
+
+\begin{proposition}[BTC-per-Share Accretion Condition]\label{prop:accretion}
+ATM issuance at time $t$ is BTC-per-share \emph{accretive} if and only if
+the implied BTC yield per dollar raised exceeds the current BTC per share
+loading:
+\begin{equation}\label{eq:accretive}
+  \frac{1}{S_t} > \frac{B_t}{P_t}
+  \quad\Longleftrightarrow\quad
+  P_t > B_t \cdot S_t
+  \quad\Longleftrightarrow\quad
+  \frac{P_t\, N_t^{\mathrm{sh}}}{H_t\, S_t} > 1
+  \quad\Longleftrightarrow\quad
+  \pi_t > 0.
+\end{equation}
+That is, ATM issuance is accretive precisely when the firm trades at a
+premium to NAV.
+\end{proposition}
+
+\begin{proof}
+ATM issuance of $\Delta N$ shares at price $P_t$ raises $P_t\,\Delta N$
+dollars, purchasing $P_t\,\Delta N / S_t$ BTC.  Post-issuance BTC per share
+is
+\[
+  B_t^{\mathrm{post}}
+  = \frac{H_t + P_t\,\Delta N / S_t}{N_t^{\mathrm{sh}} + \Delta N}.
+\]
+$B_t^{\mathrm{post}} > B_t$ iff $P_t / S_t > B_t = H_t / N_t^{\mathrm{sh}}$,
+which is equivalent to $E_t > H_t S_t - D_t$, i.e.\ $\pi_t > 0$ when
+$\mathrm{NAV}_t > 0$.
+\end{proof}
+
+%% ====================================================================
+\subsection{Extended Indicators}\label{subsec:new_indicators}
+
+We define five new indicators that complement the base-model suite
+(IBGR, ILE, TEE, PMRI, IFRD).
+
+\subsubsection{Capital Stack Leverage Ratio (CSLR)}
+
+\begin{definition}[CSLR]\label{def:cslr}
+The \emph{Capital Stack Leverage Ratio} measures total claims senior to
+common equity relative to equity market value:
+\begin{equation}\label{eq:cslr}
+  \mathrm{CSLR}_t
+  = \frac{D_s(t) + D_c(t) + P_{nc}(t) + P_c(t)}{E_t}
+  = \frac{L_t}{E_t}.
+\end{equation}
+\end{definition}
+
+\noindent Unlike the base-model ILE, which captures \emph{elasticity},
+the CSLR is a static leverage ratio that directly measures the weight
+of the liability stack.  As preferred stock issuance grows, CSLR rises
+even if debt remains constant, capturing the layering of soft liabilities.
+
+\subsubsection{Preferred Coverage Ratio (PCR)}
+
+\begin{definition}[PCR]\label{def:pcr}
+The \emph{Preferred Coverage Ratio} measures the firm's capacity to
+meet preferred dividend obligations:
+\begin{equation}\label{eq:pcr}
+  \mathrm{PCR}_t
+  = \frac{\mathbb{E}_t^{\mathbb{P}}\!\bigl[\Delta A_{t,T}^+\bigr]
+          + \mathrm{CF}_t^{\mathrm{ops}}\cdot T}
+         {\Phi_t \cdot T},
+\end{equation}
+where $\Delta A_{t,T}^+ = \max(A_T - A_t,\, 0)$ is expected BTC
+appreciation over horizon $T$, and $\Phi_t$ is the annual preferred
+dividend obligation from~\eqref{eq:agg_pfd_div}.
+\end{definition}
+
+\noindent $\mathrm{PCR}_t > 1$ indicates that expected asset appreciation
+covers preferred dividends; $\mathrm{PCR}_t < 1$ signals potential
+dividend stress and increased probability of governance consequences
+(e.g.\ board representation rights for preferred holders).
+
+\subsubsection{Dilution-Adjusted IBGR}
+
+\begin{definition}[Dilution-Adjusted IBGR]\label{def:da_ibgr}
+The \emph{Dilution-Adjusted IBGR} measures BTC growth per share net of
+all dilution sources, including potential preferred stock conversions:
+\begin{equation}\label{eq:da_ibgr}
+  \mathrm{IBGR}_t^{\mathrm{DA}}
+  = \frac{1}{B_t^{\mathrm{CA}}}
+    \mathbb{E}_t^{\mathbb{P}}\!\left[
+      \frac{B_{t+\Delta t}^{\mathrm{CA}} - B_t^{\mathrm{CA}}}{\Delta t}
+    \right],
+\end{equation}
+where $B_t^{\mathrm{CA}}$ is the Conversion-Adjusted BTC per Share
+from~\eqref{eq:ca_bps}.  This differs from the base-model per-share IBGR
+by using the fully diluted share count.
+\end{definition}
+
+\noindent In practice, $\mathrm{IBGR}_t^{\mathrm{DA}}$ is estimated via
+Monte Carlo by simulating joint paths of $(S_t, H_t, N_t^{\mathrm{sh}},
+n_c(t))$ under $\mathbb{P}$ and computing sample means of the ratio.
+
+\subsubsection{Effective Leverage Elasticity (ELE)}
+
+\begin{definition}[ELE]\label{def:ele}
+The \emph{Effective Leverage Elasticity} generalizes ILE to account for
+the preferred stock buffer layer between debt and common equity:
+\begin{equation}\label{eq:ele}
+  \mathrm{ELE}_t
+  = \frac{\partial \log E_t}{\partial \log S_t}\bigg|_{\pi_t\text{ fixed}}
+  = \frac{H_t\, S_t}
+         {H_t\, S_t - D_s(t) - D_c(t) - P_{nc}(t) - P_c(t)}
+  = \frac{A_t}{A_t - L_t},
+\end{equation}
+whenever $A_t > L_t$.
+\end{definition}
+
+\begin{proposition}[Ordering of Elasticities]\label{prop:ele_ordering}
+When preferred stock outstanding is positive,
+\begin{equation}\label{eq:ele_vs_ile}
+  \mathrm{ELE}_t \;\ge\; \mathrm{ILE}_t
+  = \frac{A_t}{A_t - D_s(t) - D_c(t)},
+\end{equation}
+with equality iff $P_{nc}(t) + P_c(t) = 0$.  The incremental leverage
+from the preferred layer is
+\begin{equation}\label{eq:ele_increment}
+  \Delta\beta_t^{\mathrm{pfd}}
+  = \mathrm{ELE}_t - \mathrm{ILE}_t
+  = \frac{A_t\bigl(P_{nc}(t) + P_c(t)\bigr)}
+         {\bigl(A_t - D_t\bigr)\bigl(A_t - L_t\bigr)},
+\end{equation}
+where $D_t = D_s(t) + D_c(t)$.
+\end{proposition}
+
+\begin{proof}
+Both $\mathrm{ELE}_t$ and $\mathrm{ILE}_t$ have the form $A_t/(A_t - X)$
+with $X_{\mathrm{ELE}} = L_t \ge X_{\mathrm{ILE}} = D_t$.  The function
+$f(X) = A_t/(A_t-X)$ is increasing in $X$ for $X < A_t$, yielding the
+inequality.  The difference follows by algebra.
+\end{proof}
+
+\noindent The extended Total Equity Elasticity becomes
+\begin{equation}\label{eq:tee_ext}
+  \beta_{\mathrm{TOT}}^{\mathrm{ext}}(t)
+  = \gamma_{\pi S} + \mathrm{ELE}_t,
+\end{equation}
+replacing $\mathrm{ILE}_t$ with $\mathrm{ELE}_t$ in the base formula.
+
+\subsubsection{Capital Efficiency Ratio (CER)}
+
+\begin{definition}[CER]\label{def:cer}
+The \emph{Capital Efficiency Ratio} measures the BTC-per-share accretion
+generated per unit of capital stack leverage:
+\begin{equation}\label{eq:cer}
+  \mathrm{CER}_t
+  = \frac{\mathrm{IBGR}_t^{\mathrm{DA}}}{\mathrm{CSLR}_t}.
+\end{equation}
+\end{definition}
+
+\noindent High CER indicates that additional leverage is being deployed
+productively (generating BTC accretion per share), while low CER signals
+that the capital stack is growing faster than per-share BTC accumulation
+--- a sign of diminishing returns to the flywheel strategy.
+
+%% ====================================================================
+\subsection{Structural Relationships and Summary}\label{subsec:summary}
+
+\begin{theorem}[Flywheel Decomposition]\label{thm:flywheel_decomp}
+Under the extended model, the instantaneous change in common equity value
+decomposes as:
+\begin{equation}\label{eq:equity_decomp}
+  \frac{dE_t}{E_t}
+  = \underbrace{\mathrm{ELE}_t \cdot \frac{dS_t}{S_t}}_{\text{leveraged BTC return}}
+  + \underbrace{d\pi_t}_{\text{premium change}}
+  - \underbrace{\frac{\Phi_t\,dt}{A_t - L_t}}_{\text{preferred dividend drag}}
+  + \underbrace{\frac{S_t\,dH_t}{A_t - L_t}}_{\text{BTC accretion lift}}
+  + O(dt).
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+From $E_t = e^{\pi_t}(A_t - L_t)^+$ with $A_t = H_t S_t$, apply It\^{o}'s
+lemma to $\log E_t = \pi_t + \log(A_t - L_t)$ and note that preferred
+dividends reduce $A_t$ at rate $\Phi_t$ (dividends are paid from assets),
+while BTC acquisitions increase $A_t$ at rate $S_t\,dH_t$.  Collecting
+terms yields the decomposition.
+\end{proof}
+
+\noindent This decomposition makes explicit the tension at the heart of
+the Strategy model:
+\begin{itemize}
+  \item The BTC accretion lift is powered by the financing flywheel
+        (Section~\ref{subsec:flywheel}).
+  \item The preferred dividend drag is the cost of funding via preferred
+        equity, which grows monotonically with issuance.
+  \item The premium change can amplify or dampen returns depending on
+        market sentiment.
+  \item Effective leverage $\mathrm{ELE}_t$ increases with both debt and
+        preferred issuance, amplifying BTC returns in both directions.
+\end{itemize}
+
+Table~\ref{tab:indicators} summarizes the complete indicator suite.
+
+\begin{table}[htbp]
+\centering
+\caption{Summary of structural indicators: base model and extensions.}
+\label{tab:indicators}
+\small
+\begin{tabular}{@{}llp{6.5cm}@{}}
+\toprule
+\textbf{Indicator} & \textbf{Type} & \textbf{Description} \\
+\midrule
+ILE & Base & Structural leverage elasticity (debt only) \\
+TEE & Base & Total equity elasticity incl.\ premium response \\
+PMRI & Base & Premium z-score under OU stationarity \\
+IBGR & Base & Expected BTC growth rate (total and per-share) \\
+IFRD & Base & Funding requirement distribution \\
+\midrule
+CSLR & Extended & Total claims / equity (full capital stack leverage) \\
+PCR & Extended & Expected asset appreciation / preferred dividends \\
+$\text{IBGR}^{\text{DA}}$ & Extended & Dilution-adjusted BTC growth per share \\
+ELE & Extended & Leverage elasticity incl.\ preferred buffer \\
+CER & Extended & BTC accretion per unit leverage \\
+\bottomrule
+\end{tabular}
+\end{table}
