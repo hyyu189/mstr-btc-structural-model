@@ -1,0 +1,48 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{What the Model Tells Us About Strategy's Viability}
+
+The calibrated model paints a picture of a company that has, through late 2025, successfully executed its leverage flywheel. Three findings stand out:
+
+\textbf{First, the flywheel has been accretive.} The near-equality of total IBGR (18.3\%) and per-share IBGR (18.4\%) demonstrates that Strategy has acquired BTC at prices and share-issuance ratios that deliver increasing BTC per share. This is the core value proposition: common shareholders receive compounding exposure to BTC without directly purchasing it. The pure jump model ($\alpha = 0$) confirms that accretion occurs through discrete, large financing events rather than gradual accumulation---consistent with the company's pattern of multi-billion dollar ATM programs and convertible offerings.
+
+\textbf{Second, balance-sheet leverage is currently modest.} An ILE of 1.17 means the equity's structural exposure to BTC barely exceeds 1:1. The 2020--2022 period saw much higher leverage (when BTC prices were lower relative to debt), but BTC appreciation has dramatically delevered the balance sheet. The \$8.2 billion debt stack is a small fraction of the \$56.1 billion BTC portfolio, providing substantial cushion. The 99.4\% three-year survival probability reflects this buffer.
+
+\textbf{Third, the premium is currently depressed.} The PMRI of $-1.51$ suggests the market is pricing Strategy conservatively relative to the model's long-run equilibrium. Under the calibrated OU dynamics (half-life of $\sim$62 trading days), the premium is expected to mean-revert upward. Whether this represents a buying opportunity depends on whether the OU calibration (fitted primarily to the 2020--2025 sample) remains valid as the capital structure evolves with new preferred layers.
+
+\subsection{Implications for Other BTC Treasury Companies}
+
+Strategy's success has spawned imitators: several companies have adopted or announced Bitcoin treasury strategies, and the analytical framework developed here applies directly. The model's key inputs---BTC holdings, debt schedule, share count, and premium---are publicly observable for any such company, enabling cross-sectional comparison of flywheel efficiency and structural health.
+
+The indicators have natural comparative interpretations. A company with high ILE and high IBGR is aggressively but accretively leveraging BTC. A company with high ILE but low or negative per-share IBGR is diluting shareholders without sufficient BTC accumulation. The PMRI can identify relative value across BTC treasury vehicles by comparing each company's premium deviation from its own long-run mean.
+
+\subsection{Model Limitations}
+
+Several limitations warrant discussion:
+
+\textbf{Stationarity of the OU premium.} The OU specification assumes a constant long-run mean $\theta$ and mean-reversion speed $\kappa$. In practice, $\theta$ may shift as the BTC treasury model becomes better understood (or as new competitors enter), and $\kappa$ may vary with market microstructure and investor base composition. A regime-switching extension would address this but at the cost of additional parameters.
+
+\textbf{Exogenous debt.} Modeling debt as deterministic ignores the strategic timing of issuance and the option value of convertible bonds. In reality, management times debt issuance opportunistically (issuing when premia are high and credit markets receptive), creating endogeneity that our model does not capture. A fuller model would make debt issuance intensity depend on the premium and BTC price, mirroring the holding dynamics.
+
+\textbf{Risk-neutral vs.\ physical measure.} All indicators are computed under the physical measure, appropriate for real-world risk assessment. However, for pricing derivatives on MSTR equity or for risk-neutral valuation of the convertible bonds, a measure change would be needed, requiring specification of market prices of risk for both BTC and premium factors.
+
+\textbf{Sample period.} The calibration uses data from 2020--2025, a period of generally favorable conditions for both BTC and the treasury model. Parameters estimated from this sample (particularly $\mu_S$ and $\theta$) may overstate the attractiveness of the strategy in a more adverse macro environment.
+
+\textbf{Correlation stability.} The negative $\rho$ and $\gamma_{\pi S}$ are estimated as constants, but the relationship between BTC returns and the premium may be state-dependent---for instance, the premium may become more sensitive to BTC in high-leverage states or during market stress.
+
+\subsection{Preferred Stock Extensions}
+
+Strategy's capital stack has expanded significantly with the introduction of perpetual preferred stock series. Extending the model to accommodate these layers requires:
+
+\textbf{Priority waterfall.} In liquidation and for dividend distribution, the capital stack follows: senior debt $\to$ convertible bonds $\to$ preferred stock (by seniority) $\to$ common equity. NAV must be allocated through this waterfall, with each tranche receiving its claim before the residual passes to the next.
+
+\textbf{Perpetual dividend obligations.} Unlike debt maturities, preferred stock carries perpetual fixed dividends (8\% for STRK, 10\% for STRF). These create ongoing cash flow demands that affect the survival analysis---distress is no longer solely an asset-vs-debt question but includes the ability to service dividend obligations from BTC sales or new issuance.
+
+\textbf{Conversion optionality.} STRK's convertibility into MSTR common stock at a fixed ratio (0.1 shares per STRK share) creates an embedded option that affects both the preferred valuation and the share count dynamics. When MSTR trades above the implied conversion price, STRK holders have an incentive to convert, diluting common equity but reducing preferred dividend obligations.
+
+Incorporating these features into the simulation engine is a natural next step. The framework developed here---with its joint evolution of BTC price, premium, holdings, and share count---provides the scaffolding; what remains is to layer the priority waterfall on top of the existing NAV computation and add dividend cash-flow accounting to the survival analysis.
+
+\subsection{Broader Implications for Corporate Finance}
+
+The Bitcoin treasury vehicle represents a novel corporate form that challenges traditional frameworks. It is not a holding company (it actively trades), not a fund (it uses leverage and issues preferred equity), and not a traditional operating company (its ``operations'' are financial engineering). The structural model developed here suggests that this form can be viable---with 99\%+ survival probabilities---when operated with discipline (moderate leverage, accretive issuance). The key risk is not BTC volatility per se, but the potential for the flywheel to become \emph{dilutive}: if management issues shares or converts at unfavorable ratios, per-share BTC declines, the premium collapses, and the flywheel reverses. Our indicators---particularly the per-share IBGR and the PMRI---are designed to detect this transition early.
