@@ -1,0 +1,76 @@
+This is BibTeX, Version 0.99d (TeX Live 2025)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main.aux
+The style file: plainnat.bst
+Database file #1: references.bib
+Warning--I didn't find a database entry for "black1976valuing"
+Warning--I didn't find a database entry for "leland1994corporate"
+Warning--I didn't find a database entry for "leland1996optimal"
+Warning--I didn't find a database entry for "huang2004structural"
+Warning--I didn't find a database entry for "lee1991investor"
+Warning--I didn't find a database entry for "pontiff1995closed"
+Warning--I didn't find a database entry for "cherkes2009closed"
+Warning--I didn't find a database entry for "dimson1999closed"
+Warning--I didn't find a database entry for "alexander2024bitcoin"
+Warning--I didn't find a database entry for "nakamoto2008bitcoin"
+Warning--I didn't find a database entry for "liu2021risks"
+Warning--I didn't find a database entry for "makarov2020trading"
+Warning--I didn't find a database entry for "katsiampa2017volatility"
+Warning--I didn't find a database entry for "biais2023equilibrium"
+Warning--I didn't find a database entry for "merton1976option"
+Warning--I didn't find a database entry for "kou2002jump"
+Warning--I didn't find a database entry for "griffin2020bitcoin"
+Warning--I didn't find a database entry for "vanelli2024bitcoin"
+Warning--I didn't find a database entry for "amin2024corporate"
+Warning--I didn't find a database entry for "brennan1977convertible"
+Warning--I didn't find a database entry for "ingersoll1977contingent"
+Warning--I didn't find a database entry for "tsiveriotis1998valuing"
+Warning--I didn't find a database entry for "ammann2003pricing"
+Warning--I didn't find a database entry for "kallberg2013preferred"
+Warning--I didn't find a database entry for "modigliani1958cost"
+Warning--I didn't find a database entry for "myers1984capital"
+Warning--I didn't find a database entry for "baker2002market"
+Warning--I didn't find a database entry for "glasserman2004monte"
+Warning--I didn't find a database entry for "vasicek1977equilibrium"
+You've used 1 entry,
+            2773 wiz_defined-function locations,
+            628 strings with 5492 characters,
+and the built_in function-call counts, 424 in all, are:
+= -- 38
+> -- 10
+< -- 1
++ -- 4
+- -- 3
+* -- 31
+:= -- 69
+add.period$ -- 3
+call.type$ -- 1
+change.case$ -- 4
+chr.to.int$ -- 1
+cite$ -- 2
+duplicate$ -- 20
+empty$ -- 41
+format.name$ -- 4
+if$ -- 83
+int.to.chr$ -- 1
+int.to.str$ -- 1
+missing$ -- 1
+newline$ -- 13
+num.names$ -- 4
+pop$ -- 7
+preamble$ -- 1
+purify$ -- 3
+quote$ -- 0
+skip$ -- 14
+stack$ -- 0
+substring$ -- 27
+swap$ -- 1
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 11
+warning$ -- 0
+while$ -- 5
+width$ -- 0
+write$ -- 20
+(There were 29 warnings)

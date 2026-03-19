@@ -1,0 +1,15 @@
+\begin{thebibliography}{1}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Merton(1974)]{merton1974pricing}
+Robert~C Merton.
+\newblock On the pricing of corporate debt: The risk structure of interest
+  rates.
+\newblock \emph{The Journal of Finance}, 29\penalty0 (2):\penalty0 449--470,
+  1974.
+
+\end{thebibliography}
