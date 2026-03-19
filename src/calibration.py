@@ -188,7 +188,9 @@ def fit_holdings_dynamics(
 
     jump_sizes = None
     if "btc_purchased_num" in ph.columns:
-        jump_sizes = ph["btc_purchased_num"].dropna()
+        js = ph["btc_purchased_num"].dropna()
+        # Filter to positive purchases only; the flywheel model assumes ΔH ≥ 0.
+        jump_sizes = js[js > 0]
         if jump_sizes.empty:
             jump_sizes = None
 

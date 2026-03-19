@@ -37,8 +37,8 @@
 - **ou_theta**: 1.0805109745558952
 - **ou_sigma**: 3.7943578361266157
 - **holdings_alpha**: 0.0
-- **holdings_lambda_m**: 19.244145822245876
-- **holdings_mean_jump_size**: 6965.292929292929
+- **holdings_lambda_m**: 19.04976051091006
+- **holdings_mean_jump_size**: 7043.551020408163
 
 ## Key Indicators
 
@@ -53,12 +53,12 @@
 - **ILE_current**: 1.488150665547579
 - **TEE_current**: -2.108878088109561
 - **PMRI_current**: -0.7134605135110367
-- **IBGR_total_current**: 0.17612238699560523
-- **IBGR_per_share_3y**: 0.17588981194404743
-- **IFRD_mean**: 35397116866.59311
-- **IFRD_p95**: 73112738774.03625
-- **survival_prob_3y_eps0**: 0.917
-- **survival_prob_3y_eps10pct**: 0.8918
+- **IBGR_total_current**: 0.17630219649906664
+- **IBGR_per_share_3y**: 0.1761834832175858
+- **IFRD_mean**: 35327916376.529175
+- **IFRD_p95**: 71779486368.09663
+- **survival_prob_3y_eps0**: 0.919
+- **survival_prob_3y_eps10pct**: 0.8908
 - **dividend_coverage_ratio_current**: 49.18008010712374
-- **dividend_coverage_ratio_3y_mean**: 115.87980611652473
-- **dividend_coverage_prob_undercovered_3y**: 0.0104
+- **dividend_coverage_ratio_3y_mean**: 113.69384101704367
+- **dividend_coverage_prob_undercovered_3y**: 0.01
