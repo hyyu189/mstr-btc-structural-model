@@ -1,0 +1,197 @@
+\section{Methodology}
+\label{sec:methodology}
+
+This section presents the structural model in full. We begin with the probability space and state variables, then specify each stochastic process, derive the equity valuation identity, and finally define the five diagnostic indicators.
+
+\subsection{Setup: Probability Space and State Variables}
+
+We work on a filtered probability space $(\Omega, \mathcal{F}, (\mathcal{F}_t)_{t \ge 0})$ equipped with two measures:
+\begin{itemize}
+    \item $\mathbb{P}$: the physical (historical) measure, used for premium dynamics, management behavior (holdings accumulation), survival analysis, and all indicator computations.
+    \item $\mathbb{Q}$: the risk-neutral measure, available for calibrating BTC volatility and jump parameters to options data if desired.
+\end{itemize}
+
+The model's state variables are:
+\begin{itemize}
+    \item $S_t$: BTC spot price (BTC-USD).
+    \item $H_t$: Strategy's BTC holdings (in BTC).
+    \item $D_t$: outstanding debt (face value).
+    \item $N_t^{\text{sh}}$: shares of common equity outstanding.
+    \item $\pi_t$: log-premium of equity over NAV.
+\end{itemize}
+
+From these primitives, we derive:
+\begin{align}
+    A_t &= H_t S_t, & &\text{(BTC asset value)} \\
+    \text{NAV}_t &= (A_t - D_t)^+ = \max(H_t S_t - D_t, 0), & &\text{(net asset value)} \\
+    E_t &= P_t N_t^{\text{sh}}, & &\text{(equity market capitalization)} \\
+    B_t &= H_t / N_t^{\text{sh}}, & &\text{(BTC per share)}
+\end{align}
+where $P_t$ is the share price.
+
+To avoid log singularities when computing the historical premium from data, we introduce a floor $\varepsilon > 0$:
+\begin{equation}
+    \text{NAV}_t^{\text{clip}} = \max(A_t - D_t, \varepsilon),
+\end{equation}
+and define the log-premium as:
+\begin{equation}
+    \pi_t = \log\left(\frac{E_t}{\text{NAV}_t^{\text{clip}}}\right).
+\end{equation}
+Periods where $A_t \approx D_t$ are flagged as a ``distress regime'' and handled separately in calibration.
+
+\subsection{BTC Price Dynamics}
+
+Under the risk-neutral measure $\mathbb{Q}$, for option calibration we consider a jump-diffusion:
+\begin{equation}
+    \frac{dS_t}{S_{t^-}} = \left(r_t - q_S - \lambda_S k_S\right) dt + \sigma_S(S_t, t)\, dW_t^{S,\mathbb{Q}} + \left(e^{Y_S} - 1\right) dN_t^S,
+\end{equation}
+where $r_t$ is the risk-free rate, $q_S$ is any BTC carry term (set to zero at baseline), $W_t^{S,\mathbb{Q}}$ is a standard Brownian motion under $\mathbb{Q}$, $N_t^S$ is a Poisson process with intensity $\lambda_S$, $Y_S$ is the log-jump size with distribution $\nu_S$, $k_S = \mathbb{E}[e^{Y_S} - 1]$ is the jump compensator, and $\sigma_S(S_t, t)$ is a potentially state-dependent volatility.
+
+For the physical-measure simulations that drive our indicator computations, we use a simpler geometric Brownian motion calibrated to historical BTC returns:
+\begin{equation}
+    \frac{dS_t}{S_t} = \mu_S\, dt + \sigma_S\, dW_t^{S,\mathbb{P}},
+\end{equation}
+with constant drift $\mu_S$ and volatility $\sigma_S$ estimated from daily log-returns.
+
+\subsection{Premium Dynamics}
+
+The log-premium $\pi_t$ is modeled as an Ornstein--Uhlenbeck (OU) process under the physical measure, capturing the empirical observation that premia to NAV exhibit mean-reversion:
+\begin{equation}
+    d\pi_t = \kappa(\theta - \pi_t)\, dt + \sigma_\pi\, dW_t^{\pi,\mathbb{P}} + \eta_\pi\, dJ_t^\pi,
+\end{equation}
+where $\kappa > 0$ is the mean-reversion speed, $\theta$ is the long-run mean log-premium, $\sigma_\pi$ is the diffusive volatility, $W_t^{\pi,\mathbb{P}}$ is a Brownian motion under $\mathbb{P}$, and $J_t^\pi$ is an optional pure-jump process with intensity $\lambda_\pi$ (set to zero at baseline).
+
+The BTC and premium Brownian motions are correlated:
+\begin{equation}
+    \text{corr}(dW_t^{S,\mathbb{P}}, dW_t^{\pi,\mathbb{P}}) = \rho.
+\end{equation}
+
+This correlation is economically meaningful: a negative $\rho$ indicates that the premium tends to compress when BTC rises (and vice versa), reflecting a ``buy the rumor, sell the news'' dynamic in NAV-premium relationships.
+
+The exact discrete-time transition for daily step $\Delta t$ is:
+\begin{equation}
+    \pi_{t+\Delta t} = \theta + (\pi_t - \theta) e^{-\kappa \Delta t} + \sigma_\pi \sqrt{\frac{1 - e^{-2\kappa \Delta t}}{2\kappa}}\, Z_\pi,
+\end{equation}
+where $(Z_S, Z_\pi)$ are bivariate standard normal with $\text{corr}(Z_S, Z_\pi) = \rho$.
+
+\subsection{BTC Holding Dynamics: The Leverage Flywheel}
+
+The defining feature of a Bitcoin treasury vehicle is that holdings are \emph{endogenous}: management acquires BTC using proceeds from equity and debt issuance, with the pace of acquisition linked to the premium. We model this via:
+\begin{equation}
+    dH_t = \alpha\, \pi_t^+\, dt + dH_t^{\text{jump}}, \qquad \pi_t^+ = \max(\pi_t, 0),
+\end{equation}
+where the continuous drift captures routine accumulation scaled by the positive premium, and the jump component captures discrete financing events:
+\begin{equation}
+    dH_t^{\text{jump}} = \sum_k \Delta H_{\tau_k}\, \delta_{t = \tau_k}, \qquad \Delta H_{\tau_k} \ge 0.
+\end{equation}
+Here $\{\tau_k\}$ are event times of a Poisson process $M_t$ with intensity $\lambda_M$, and $\Delta H_{\tau_k}$ are BTC amounts purchased. The jump sizes are drawn from an empirical distribution $\mathcal{D}_H$ calibrated to observed purchase events.
+
+In discrete time:
+\begin{equation}
+    H_{t+\Delta t} = H_t + \alpha \pi_t^+ \Delta t + \sum_{i=1}^{N_t^M} \Delta H_{t,i}, \qquad N_t^M \sim \text{Poisson}(\lambda_M \Delta t).
+\end{equation}
+
+When the data suggest $\alpha \approx 0$ (as in our calibration), the model reduces to a pure compound Poisson accumulation process, with all BTC growth occurring through discrete financing events. The intensity or size distribution can be further enriched to depend on leverage or premium levels.
+
+\subsection{Debt and Share-Count Dynamics}
+
+\paragraph{Debt.} At baseline, total outstanding debt is modeled as deterministic and piecewise-constant:
+\begin{equation}
+    D_t = \sum_{j=1}^J D_j \mathbf{1}_{\{t < T_j\}},
+\end{equation}
+where each debt instrument $j$ has face value $D_j$ and maturity $T_j$. This conservative treatment ignores the equity-like behavior of deep in-the-money convertibles, providing a solvency lower bound.
+
+\paragraph{Share count.} Shares outstanding evolve through equity issuance and convertible conversion:
+\begin{equation}
+    dN_t^{\text{sh}} = dN_t^{\text{(equity)}} + dN_t^{\text{(conv)}},
+\end{equation}
+where both components are jump processes aligned with financing and conversion events. BTC per share is then:
+\begin{equation}
+    B_t = \frac{H_t}{N_t^{\text{sh}}}.
+\end{equation}
+The per-share metric $B_t$ is central to assessing whether the flywheel is \emph{accretive}: if $B_t$ grows over time despite share dilution, each share commands more BTC.
+
+\subsection{Equity Valuation Identity}
+
+The structural relation linking equity, assets, debt, and premium is:
+\begin{equation}
+    E_t = e^{\pi_t} \cdot (H_t S_t - D_t)^+.
+    \label{eq:equity_identity}
+\end{equation}
+This identity holds exactly when $\text{NAV}_t > \varepsilon$ (i.e., outside the distress regime where $\text{NAV}_t^{\text{clip}} = \text{NAV}_t$). It decomposes equity market capitalization into NAV (the intrinsic balance-sheet value) and the exponential of the log-premium (the market's sentiment multiplier). The premium absorbs all factors not captured by current-snapshot NAV: expected future accretion, management optionality, liquidity, and speculative demand.
+
+\subsection{Diagnostic Indicators}
+
+We derive five indicators that together characterize the structural health and valuation of a Bitcoin treasury vehicle.
+
+\subsubsection{Implied BTC Growth Rate (IBGR)}
+
+The total IBGR measures the expected annualized rate of BTC accumulation under the physical measure:
+\begin{equation}
+    \mu_H = \frac{1}{H_0} \mathbb{E}^{\mathbb{P}} \left[\frac{H_{\Delta t} - H_0}{\Delta t} \;\bigg|\; S_0, \pi_0, H_0 \right] \approx \frac{1}{H_0}\left(\alpha \pi_0^+ + \lambda_M \mathbb{E}[\Delta H]\right).
+\end{equation}
+The per-share IBGR accounts for dilution:
+\begin{equation}
+    \mu_{H/N} = \frac{1}{B_0} \mathbb{E}^{\mathbb{P}} \left[\frac{B_{\Delta t} - B_0}{\Delta t} \;\bigg|\; S_0, \pi_0, H_0, N_0^{\text{sh}} \right],
+\end{equation}
+estimated via Monte Carlo simulation of joint $(H_t, N_t^{\text{sh}})$ paths. Positive $\mu_{H/N}$ indicates accretive growth---the flywheel is delivering more BTC per share despite dilution.
+
+\subsubsection{Implied Leverage Elasticity (ILE)}
+
+The ILE captures the pure balance-sheet sensitivity of equity to BTC price, holding the premium fixed:
+\begin{equation}
+    \text{ILE}_t = \beta_{LS}(t) = \frac{\partial \log E_t}{\partial \log S_t}\bigg|_{\pi_t\text{ fixed}} = \frac{H_t S_t}{H_t S_t - D_t},
+\end{equation}
+for $H_t S_t > D_t$. An ILE of 1.17 means a 1\% BTC move produces a 1.17\% equity move from leverage alone, before any premium response.
+
+\subsubsection{Total Equity Elasticity (TEE)}
+
+The TEE incorporates the premium's empirical response to BTC:
+\begin{equation}
+    \beta_{\text{TOT}}(t) = \frac{d\log E_t}{d\log S_t} = \gamma_{\pi S} + \beta_{LS}(t),
+\end{equation}
+where $\gamma_{\pi S}$ is the regression coefficient of premium changes on BTC log-returns:
+\begin{equation}
+    \gamma_{\pi S} \approx \frac{\text{Cov}(\Delta \pi_t, \Delta \log S_t)}{\text{Var}(\Delta \log S_t)}.
+\end{equation}
+The TEE is what traders experience in their P\&L. When $\gamma_{\pi S} < 0$, premium compression partially offsets leverage, and the TEE may be less than the ILE.
+
+\subsubsection{Premium Mean-Reversion Index (PMRI)}
+
+The PMRI standardizes the current premium against its OU stationary distribution:
+\begin{equation}
+    \text{PMRI} = \frac{\pi_0 - \theta}{\sigma_\pi / \sqrt{2\kappa}},
+\end{equation}
+where $\sigma_\pi^2 / (2\kappa)$ is the stationary variance of the OU process. Large positive values signal exuberance; large negative values signal distress or undervaluation.
+
+\subsubsection{Implied Funding Requirement Distribution (IFRD)}
+
+The IFRD characterizes the probability distribution of capital required to sustain the model-implied BTC accumulation trajectory over a horizon $\Delta t$:
+\begin{equation}
+    G_{\Delta t} = \int_0^{\Delta t} S_u\, dH_u = \int_0^{\Delta t} S_u \alpha \pi_u^+\, du + \sum_{0 < u \le \Delta t} S_u \Delta H_u.
+\end{equation}
+In discrete simulation:
+\begin{equation}
+    G_{\Delta t}^{(\text{path})} \approx \sum_{k=0}^{n-1} S_{t_k}(H_{t_{k+1}} - H_{t_k}).
+\end{equation}
+Monte Carlo over simulated paths provides the empirical distribution of $G_{\Delta t}$, from which we extract the mean, standard deviation, and tail measures (e.g., $\text{VaR}_{95\%}$). Large IFRD values relative to the firm's financing capacity signal potential flywheel unsustainability.
+
+\subsection{Survival and Distress Analysis}
+
+Define a distress event as the first time BTC asset value breaches the debt boundary with buffer $\varepsilon_d \ge 0$:
+\begin{equation}
+    \tau = \inf\{u \in [0,T] : H_u S_u \le (1+\varepsilon_d) D_u\}.
+\end{equation}
+The survival probability over horizon $T$ is:
+\begin{equation}
+    \mathbb{P}(\tau > T) \approx \frac{\#\{\text{paths with no breach before } T\}}{\#\{\text{total simulated paths}\}}.
+\end{equation}
+This Monte Carlo estimate accounts for the full joint dynamics of BTC price, premium, and holdings accumulation, providing a structurally informed solvency assessment that incorporates the flywheel's stabilizing (or destabilizing) effects.
+
+\subsection{Calibration Strategy}
+
+\paragraph{Premium OU parameters.} Using the exact OU transition density, we estimate $(\kappa, \theta, \sigma_\pi)$ via maximum likelihood on the daily log-premium series, excluding distress-regime observations. The correlation $\rho$ and premium-BTC sensitivity $\gamma_{\pi S}$ are estimated from empirical correlations and OLS regression of premium changes on BTC log-returns.
+
+\paragraph{Holdings dynamics.} We construct the BTC holding change series from public disclosures, identify financing event dates, and estimate jump intensity $\lambda_M$ as the annualized event frequency and mean jump size $\mathbb{E}[\Delta H]$ from the empirical distribution of BTC purchased per event. The continuous drift $\alpha$ is estimated by regressing non-event holding changes on the positive premium; when statistically insignificant (as in our sample), we set $\alpha = 0$.
+
+\paragraph{BTC price parameters.} The drift $\mu_S$ and volatility $\sigma_S$ are estimated from historical daily BTC log-returns under the physical measure.

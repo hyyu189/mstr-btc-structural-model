@@ -6,7 +6,7 @@
 
 \section{Extended Structural Model: Capital Stack and Preferred Equity}\label{sec:model_extended}
 
-We extend the single-debt baseline of Section~2 to accommodate Strategy's
+We extend the single-debt baseline of Section~\ref{sec:methodology} to accommodate Strategy's
 multi-layered capital structure, which as of early 2026 includes senior debt,
 convertible bonds, multiple series of perpetual preferred stock (both
 convertible and non-convertible), and common equity.  The extensions below
@@ -87,7 +87,7 @@ For periods where some convertible debt is deep in-the-money, one may define
 an \emph{effective liability}
 $L_t^{\mathrm{eff}} = D_s(t) + D_c^{\mathrm{eff}}(t) + P_{nc}(t) + P_c(t)$,
 where $D_c^{\mathrm{eff}}(t)$ discounts the equity-like component
-(cf.\ Section~2.5 of the base model).  This keeps the waterfall
+(cf.\ the debt process in Section~\ref{sec:methodology}).  This keeps the waterfall
 well-ordered while avoiding double-counting of the conversion value.
 \end{remark}
 
@@ -248,11 +248,15 @@ After accounting for potential conversion of all in-the-money convertible
 preferred shares, the \emph{Conversion-Adjusted NAV} is
 \begin{equation}\label{eq:ca_nav}
   \mathrm{NAV}_t^{\mathrm{CA}}
-  = \frac{A_t - D_s(t) - D_c(t) - P_{nc}(t)}
+  = \frac{A_t - D_s(t) - D_c(t) - P_{nc}(t)
+          - \bigl(n_c(t) - n_c^{\mathrm{ITM}}(t)\bigr) F_c}
          {N_t^{\mathrm{sh}} + n_c^{\mathrm{ITM}}(t)\,\phi},
 \end{equation}
 where $n_c^{\mathrm{ITM}}(t)$ is the number of convertible preferred shares
-for which $\phi\, P_t > F_c$ (i.e.\ in-the-money).
+for which $\phi\, P_t > F_c$ (i.e.\ in-the-money).  The numerator deducts
+the par claim of out-of-the-money convertible preferred
+$\bigl(n_c - n_c^{\mathrm{ITM}}\bigr) F_c$, since those shares retain
+their liquidation preference rather than converting.
 \end{definition}
 
 \begin{definition}[Conversion-Adjusted BTC per Share]\label{def:ca_bps}
@@ -386,12 +390,14 @@ loading:
   \quad\Longleftrightarrow\quad
   P_t > B_t \cdot S_t
   \quad\Longleftrightarrow\quad
-  \frac{P_t\, N_t^{\mathrm{sh}}}{H_t\, S_t} > 1
+  \frac{E_t}{A_t} > 1
   \quad\Longleftrightarrow\quad
-  \pi_t > 0.
+  \pi_t > \log\!\bigl(\mathrm{ILE}_t\bigr).
 \end{equation}
-That is, ATM issuance is accretive precisely when the firm trades at a
-premium to NAV.
+That is, ATM issuance is accretive when the log-premium exceeds
+$\log(\mathrm{ILE}_t) = \log\!\bigl(A_t / (A_t - L_t)\bigr)$.
+When $L_t = 0$ this reduces to $\pi_t > 0$; when $L_t > 0$ the
+threshold is strictly positive.
 \end{proposition}
 
 \begin{proof}
@@ -403,8 +409,10 @@ is
   = \frac{H_t + P_t\,\Delta N / S_t}{N_t^{\mathrm{sh}} + \Delta N}.
 \]
 $B_t^{\mathrm{post}} > B_t$ iff $P_t / S_t > B_t = H_t / N_t^{\mathrm{sh}}$,
-which is equivalent to $E_t > H_t S_t - D_t$, i.e.\ $\pi_t > 0$ when
-$\mathrm{NAV}_t > 0$.
+i.e.\ $E_t = P_t N_t^{\mathrm{sh}} > H_t S_t = A_t$.  Since
+$E_t = e^{\pi_t}(A_t - L_t)$, this is equivalent to
+$e^{\pi_t} > A_t / (A_t - L_t) = \mathrm{ILE}_t$, i.e.\
+$\pi_t > \log(\mathrm{ILE}_t)$.
 \end{proof}
 
 %% ====================================================================
@@ -571,12 +579,12 @@ the Strategy model:
         preferred issuance, amplifying BTC returns in both directions.
 \end{itemize}
 
-Table~\ref{tab:indicators} summarizes the complete indicator suite.
+Table~\ref{tab:indicators_extended} summarizes the complete indicator suite.
 
 \begin{table}[htbp]
 \centering
 \caption{Summary of structural indicators: base model and extensions.}
-\label{tab:indicators}
+\label{tab:indicators_extended}
 \small
 \begin{tabular}{@{}llp{6.5cm}@{}}
 \toprule

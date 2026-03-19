@@ -1,0 +1,33 @@
+\section{Introduction}
+
+\subsection{Motivation}
+
+Strategy (formerly MicroStrategy, ticker MSTR) has become the paradigmatic ``Bitcoin treasury vehicle''---a publicly traded company whose equity value derives overwhelmingly from its Bitcoin holdings rather than operating cash flows. Beginning with an initial 21{,}454 BTC purchase in August 2020, the company has accumulated over 649{,}000 BTC by late 2025, financed through a distinctive flywheel of at-the-market (ATM) equity offerings, convertible bond issuances, and most recently, multiple series of perpetual preferred stock. The resulting capital structure---spanning common equity, convertible debt, and preferred tranches including STRK (8\% convertible preferred), STRF (10\% non-convertible preferred), STRC, STRD, and STRE (EUR-denominated)---has no close precedent in corporate finance.
+
+Strategy's equity has persistently traded at a premium to its net asset value (NAV), with this premium fluctuating dramatically over time. The premium reflects the market's assessment of management's ability to continue acquiring BTC accretively---that is, growing BTC per share even as new shares are issued---combined with the embedded leverage from the debt stack and the optionality of the premium itself. Understanding whether a given premium level is ``justified'' by achievable accretion rates, or whether it reflects unsustainable speculation, is the central question facing investors in MSTR and the growing number of imitators adopting similar strategies.
+
+Despite the significance of this question, no formal structural model exists for Bitcoin treasury vehicles. Traditional corporate structural models in the Merton (1974) tradition treat the firm's assets as following geometric Brownian motion with a fixed capital structure, but Strategy's assets are a single volatile cryptocurrency whose holdings \emph{grow endogenously} in response to the very premium the model seeks to explain. The leverage flywheel creates a feedback loop: a high premium enables equity issuance, which funds BTC purchases, which (if accretive) supports the premium. This circularity demands a purpose-built framework.
+
+\subsection{Research Gap}
+
+The existing literature offers partial tools but no integrated model. Merton's (1974) structural credit model and its extensions (Black and Cox, 1976; Leland, 1994) provide the foundation for modeling equity as a call option on firm assets, but assume exogenous asset dynamics and static capital structures. The growing literature on Bitcoin valuation (Biais et al., 2023; Cong et al., 2021) addresses cryptocurrency pricing but not the corporate wrapper. Convertible bond pricing models (Tsiveriotis and Fernandes, 1998) handle individual instruments but not the full multi-layer stack with endogenous asset accumulation.
+
+The closest practical analogs---closed-end funds trading at premia or discounts to NAV---have been studied extensively (Lee et al., 1991; Pontiff, 1996), but these funds have static portfolios and do not employ leverage flywheels. Strategy's defining feature is that its portfolio is \emph{not} static: the premium drives accumulation, and accumulation supports the premium. This endogeneity is the core modeling challenge we address.
+
+\subsection{Contributions}
+
+This paper makes the following contributions:
+
+\begin{enumerate}
+    \item \textbf{A stochastic structural framework for BTC treasury vehicles.} We develop a multi-process model under the physical measure that jointly evolves BTC price, the equity-over-NAV premium, BTC holdings, and share count. The premium follows an Ornstein--Uhlenbeck process capturing mean-reversion, while holdings evolve via a compound Poisson process linked to the flywheel. The model nests several special cases including static treasury, pure-equity financing, and standard Merton-style structural models.
+
+    \item \textbf{Five novel diagnostic indicators.} We derive the Implied BTC Growth Rate (IBGR), which measures the model-implied annualized rate of BTC accumulation both in total and per-share; the Implied Leverage Elasticity (ILE), which decomposes equity sensitivity to BTC into a pure balance-sheet component; the Total Equity Elasticity (TEE), which adds the premium's response to BTC; the Premium Mean-Reversion Index (PMRI), a z-score measuring how far the current premium deviates from its long-run level; and the Implied Funding Requirement Distribution (IFRD), the probability distribution of capital needed to sustain the implied accretion path.
+
+    \item \textbf{Empirical calibration to Strategy.} We calibrate the full model to publicly available data through December 2025, estimating all structural parameters and computing each indicator. The calibration reveals economically interpretable dynamics: an 18.3\% annualized BTC accretion rate, leverage elasticity of 1.17 reflecting moderate balance-sheet leverage, and a premium currently 1.5 stationary standard deviations below its long-run mean. The three-year survival probability exceeds 99.4\%, suggesting the current capital structure is robust to stress.
+
+    \item \textbf{Extension to multi-layer preferred capital stacks.} We outline how the framework extends to accommodate preferred stock layers through a priority waterfall that respects perpetual dividend obligations and conversion optionality, establishing a foundation for full multi-tranche valuation.
+\end{enumerate}
+
+\subsection{Paper Outline}
+
+The remainder of the paper is organized as follows. Section~\ref{sec:methodology} presents the structural model: BTC price dynamics, the premium process, holding dynamics, debt and share-count modeling, and the derivation of all five indicators. Section~\ref{sec:results} reports the calibrated parameters and computed indicators with economic interpretation. Section~\ref{sec:discussion} discusses implications for investors, model limitations, and extensions. Section~\ref{sec:conclusion} concludes.
