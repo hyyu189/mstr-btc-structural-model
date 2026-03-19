@@ -189,3 +189,88 @@ def plot_capital_structure(
     fig.tight_layout()
     fig.savefig(outdir / "capital_structure.png", dpi=200, bbox_inches="tight")
     plt.close(fig)
+
+
+def plot_fair_premium_vs_actual(
+    panel: pd.DataFrame,
+    pi_star: pd.Series,
+    outdir: Path,
+) -> None:
+    """
+    Plot actual premium pi_t vs fair premium pi_star_t over time.
+    """
+    _ensure_dir(outdir)
+
+    fig, ax = plt.subplots(figsize=(10, 4.5))
+    ax.plot(panel.index, panel["premium"], label=r"Actual $\pi_t$", linewidth=2.0)
+    ax.plot(pi_star.index, pi_star, label=r"Fair $\pi_t^*$", linewidth=2.0, linestyle="--")
+    ax.axhline(0.0, color="black", linestyle=":", linewidth=0.8, alpha=0.6)
+
+    ax.fill_between(
+        panel.index,
+        panel["premium"],
+        pi_star,
+        where=panel["premium"] > pi_star,
+        alpha=0.15,
+        color="red",
+        label="Overvalued",
+    )
+    ax.fill_between(
+        panel.index,
+        panel["premium"],
+        pi_star,
+        where=panel["premium"] <= pi_star,
+        alpha=0.15,
+        color="green",
+        label="Undervalued",
+    )
+
+    ax.set_title(r"Fair Premium $\pi_t^*$ vs Actual Premium $\pi_t$")
+    ax.set_ylabel("log premium")
+    ax.legend(loc="upper left", fontsize=9)
+    ax.grid(True, alpha=0.3)
+    fig.autofmt_xdate()
+    fig.tight_layout()
+    fig.savefig(outdir / "fair_premium_vs_actual.png", dpi=200)
+    plt.close(fig)
+
+
+def plot_mispricing_timeseries(
+    delta: pd.Series,
+    delta_z: pd.Series,
+    outdir: Path,
+) -> None:
+    """
+    Plot mispricing Delta_t and z-score over time.
+    """
+    _ensure_dir(outdir)
+
+    fig, axes = plt.subplots(2, 1, figsize=(10, 7), sharex=True)
+
+    # Panel 1: raw mispricing
+    ax = axes[0]
+    ax.plot(delta.index, delta, color=sns.color_palette()[0], linewidth=1.5)
+    ax.axhline(0.0, color="black", linestyle="--", linewidth=1.0, alpha=0.7)
+    ax.fill_between(delta.index, delta, 0, where=delta > 0, alpha=0.2, color="red")
+    ax.fill_between(delta.index, delta, 0, where=delta <= 0, alpha=0.2, color="green")
+    ax.set_title(r"Structural Mispricing $\Delta_t = \pi_t - \pi_t^*$")
+    ax.set_ylabel(r"$\Delta_t$")
+    ax.grid(True, alpha=0.3)
+
+    # Panel 2: z-score with bands
+    ax = axes[1]
+    ax.plot(delta_z.index, delta_z, color=sns.color_palette()[3], linewidth=1.5)
+    ax.axhline(0.0, color="black", linestyle="--", linewidth=1.0, alpha=0.7)
+    ax.axhline(1.0, color="orange", linestyle=":", linewidth=1.0, alpha=0.7, label=r"$\pm 1\sigma$")
+    ax.axhline(-1.0, color="orange", linestyle=":", linewidth=1.0, alpha=0.7)
+    ax.axhline(2.0, color="red", linestyle=":", linewidth=1.0, alpha=0.7, label=r"$\pm 2\sigma$")
+    ax.axhline(-2.0, color="red", linestyle=":", linewidth=1.0, alpha=0.7)
+    ax.set_title(r"Mispricing Z-Score $z_t^\Delta$")
+    ax.set_ylabel("z-score")
+    ax.legend(loc="upper left", fontsize=9)
+    ax.grid(True, alpha=0.3)
+
+    fig.autofmt_xdate()
+    fig.tight_layout()
+    fig.savefig(outdir / "mispricing_timeseries.png", dpi=200)
+    plt.close(fig)

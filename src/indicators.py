@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from scipy.optimize import brentq
 
 from .calibration import ModelParams, OUParams
 
@@ -162,4 +163,236 @@ def compute_dividend_coverage_from_sim(
         "mean": mean_dcr,
         "min_mean": float(np.mean(min_dcr_per_path)),
         "prob_undercovered": prob_under,
+    }
+
+
+# ====================================================================
+# New theory indicators
+# ====================================================================
+
+
+def compute_ele_from_panel(panel: pd.DataFrame) -> pd.Series:
+    """
+    Effective Leverage Elasticity (ELE): A_t / (A_t - L_t)
+    where L_t = D_t + P_liq (debt + all preferred liquidation value).
+
+    This is identical to ILE when preferred = 0 but diverges when preferred > 0.
+    In this codebase ILE already includes preferred, so ELE = ILE.
+    """
+    return compute_ile_from_panel(panel)
+
+
+def compute_cslr(
+    debt: float, preferred_liq: float, equity_mkt_cap: float
+) -> float:
+    """
+    Capital Stack Leverage Ratio: L_t / E_t.
+    Total claims senior to common equity relative to equity market cap.
+    """
+    if equity_mkt_cap <= 0.0:
+        return float("nan")
+    return (debt + preferred_liq) / equity_mkt_cap
+
+
+def compute_pcr(
+    asset_value: float,
+    mu_s: float,
+    annual_preferred_dividend: float,
+    horizon_years: float = 3.0,
+) -> float:
+    """
+    Preferred Coverage Ratio: expected asset appreciation / preferred dividends.
+
+    PCR = E[Delta A+] / (Phi * T)
+    where E[Delta A+] approx A_0 * (exp(mu_s * T) - 1) for GBM.
+    """
+    if annual_preferred_dividend <= 0.0:
+        return float("nan")
+    expected_appreciation = asset_value * (np.exp(mu_s * horizon_years) - 1.0)
+    total_div = annual_preferred_dividend * horizon_years
+    return float(max(expected_appreciation, 0.0) / total_div)
+
+
+def compute_fair_premium(
+    ibgr: float,
+    sigma_s: float,
+    kappa: float,
+    ile: float,
+    r: float = 0.04,
+) -> float:
+    """
+    Fair premium pi_star = log(1 + V_acc / NAV).
+
+    Uses steady-state approximation:
+        V_acc / NAV ≈ IBGR / (r + kappa) * (1 + sigma_S^2 / (2*kappa))
+
+    Parameters
+    ----------
+    ibgr : BTC growth rate (proxy for accretion rate)
+    sigma_s : BTC annualized volatility
+    kappa : premium mean-reversion speed
+    ile : implied leverage elasticity (ELE)
+    r : risk-free / discount rate
+    """
+    denom = r + kappa
+    if denom <= 0:
+        return float("nan")
+    vol_adj = 1.0 + sigma_s ** 2 / (2.0 * kappa) if kappa > 0 else 1.0
+    v_acc_over_nav = ibgr / denom * vol_adj
+    v_acc_over_nav = max(v_acc_over_nav, 0.0)
+    return float(np.log(1.0 + v_acc_over_nav))
+
+
+def compute_fair_premium_timeseries(
+    panel: pd.DataFrame,
+    params: ModelParams,
+    r: float = 0.04,
+) -> pd.Series:
+    """
+    Compute fair premium pi_star_t for each date in the panel.
+    """
+    h = panel["btc_holdings"].astype(float)
+    s = panel["btc_price"].astype(float)
+    d = panel["debt_total_usd"].astype(float)
+    p = panel["preferred_liq"].astype(float) if "preferred_liq" in panel.columns else pd.Series(0.0, index=panel.index)
+
+    asset = h * s
+    liab = d + p
+    nav = (asset - liab).clip(lower=1.0)
+
+    kappa = params.ou_premium.kappa
+    sigma_s = params.sigma_s
+
+    # Per-row IBGR approximation
+    pi = panel["premium"].astype(float)
+    pi_pos = pi.clip(lower=0.0)
+    alpha = params.holdings.alpha
+    lambda_m = params.holdings.lambda_m
+    mean_jump = params.holdings.mean_jump_size
+    mu_H = (alpha * pi_pos + lambda_m * mean_jump) / h.clip(lower=1.0)
+
+    # ILE series
+    ile = asset / nav
+
+    denom = r + kappa
+    vol_adj = 1.0 + sigma_s ** 2 / (2.0 * kappa) if kappa > 0 else 1.0
+    v_ratio = (mu_H / denom * vol_adj).clip(lower=0.0)
+    pi_star = np.log(1.0 + v_ratio)
+
+    return pi_star
+
+
+def compute_mispricing(
+    pi_t: float, pi_star_t: float
+) -> Tuple[float, str]:
+    """
+    Structural mispricing: Delta_t = pi_t - pi_star_t.
+    Returns (delta, label) where label is 'overvalued' or 'undervalued'.
+    """
+    delta = pi_t - pi_star_t
+    label = "overvalued" if delta > 0 else "undervalued"
+    return delta, label
+
+
+def compute_mispricing_zscore(
+    delta_series: pd.Series,
+) -> pd.Series:
+    """
+    Mispricing z-score: delta_t / std(delta_t).
+    """
+    std = delta_series.std()
+    if std <= 0 or np.isnan(std):
+        return delta_series * 0.0
+    return delta_series / std
+
+
+def compute_reflexivity_gain(
+    eta: float,
+    ile: float,
+    pi: float,
+    kappa: float,
+    lambda_bar: float,
+) -> float:
+    """
+    Approximate reflexivity gain G.
+
+    G = eta * (dH/dS) * (dpi*/dNAV) * (d_issuance/dpi)
+
+    We approximate using:
+    - dH/dS: proportional to current holdings leverage ~ ILE
+    - dpi*/dNAV: ~ 1/NAV * dV_acc/dNAV, approximated as ~1/(1 + exp(pi))
+    - d_issuance/dpi: ~ lambda_bar (linear issuance policy)
+
+    Simplified: G ≈ eta * ILE * lambda_bar / kappa
+    """
+    if kappa <= 0:
+        return float("nan")
+    return float(eta * ile * lambda_bar / kappa)
+
+
+def compute_effective_kappa(kappa: float, G: float) -> float:
+    """
+    Effective mean-reversion: kappa_eff = kappa * (1 - G).
+    """
+    return kappa * (1.0 - G)
+
+
+def compute_tipping_point_premium(
+    ile: float,
+    ibgr: float,
+    kappa: float,
+) -> float:
+    """
+    Critical premium below which the system enters death spiral.
+    Approximation: pi_crit ≈ log(ILE) - IBGR / kappa.
+    """
+    if kappa <= 0:
+        return float("nan")
+    return float(np.log(ile) - ibgr / kappa)
+
+
+def compute_wacba(
+    pi: float,
+    ile: float,
+    s: float,
+    w_atm: float = 0.60,
+    w_conv: float = 0.25,
+    w_pfd: float = 0.15,
+    coupon_conv: float = 0.005,
+    div_pfd: float = 0.09,
+    r: float = 0.04,
+) -> Dict[str, float]:
+    """
+    Weighted Average Cost of BTC Acquisition.
+
+    Channel costs (per BTC, relative to spot):
+    - ATM: S * ELE / exp(pi)  (accretive when pi > log(ELE))
+    - Convertible: S * (1 + coupon/r)
+    - Preferred: S * (1 + div_rate/r)
+    - Ops: S (at cost)
+
+    Returns dict with channel costs and blended WACBA.
+    """
+    k_atm = s * ile / np.exp(pi)
+    k_conv = s * (1.0 + coupon_conv / r)
+    k_pfd = s * (1.0 + div_pfd / r)
+
+    # Normalize weights
+    w_total = w_atm + w_conv + w_pfd
+    w_atm_n = w_atm / w_total
+    w_conv_n = w_conv / w_total
+    w_pfd_n = w_pfd / w_total
+
+    wacba = w_atm_n * k_atm + w_conv_n * k_conv + w_pfd_n * k_pfd
+    wacba_ratio = wacba / s  # ratio to spot
+
+    return {
+        "k_atm": float(k_atm),
+        "k_conv": float(k_conv),
+        "k_pfd": float(k_pfd),
+        "wacba": float(wacba),
+        "wacba_ratio": float(wacba_ratio),
+        "k_atm_ratio": float(k_atm / s),
+        "k_conv_ratio": float(k_conv / s),
+        "k_pfd_ratio": float(k_pfd / s),
     }

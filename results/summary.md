@@ -62,3 +62,36 @@
 - **dividend_coverage_ratio_current**: 49.18008010712374
 - **dividend_coverage_ratio_3y_mean**: 113.69384101704367
 - **dividend_coverage_prob_undercovered_3y**: 0.01
+- **CSLR_current**: 0.38316159895196006
+- **PCR_current**: 7.602036603099638
+- **pi_star_current**: 0.03374393122249513
+- **mispricing_delta**: 0.2084233382842199
+- **mispricing_label**: overvalued
+- **mispricing_zscore**: 0.02083237769040124
+- **reflexivity_gain_G**: 0.0010064504007562534
+- **kappa_effective**: 5.208407175855865
+- **tipping_point_premium**: 0.36371871108123177
+- **WACBA**: 108617.33462109548
+- **WACBA_ratio_to_spot**: 1.4696018829157156
+- **WACBA_k_atm**: 86332.52353515911
+- **WACBA_k_conv**: 83148.03
+- **WACBA_k_pfd**: 240205.42
+
+## Theory Indicators (Endogenous Premium)
+
+- **Fair Premium (pi_star):** 0.0337
+- **Actual Premium (pi):** 0.2422
+- **Mispricing (Delta):** 0.2084 (overvalued)
+- **Mispricing Z-Score:** 0.02
+- **Reflexivity Gain (G):** 0.0010
+- **Effective Kappa:** 5.2084 (vs raw kappa=5.2137)
+- **Tipping Point Premium:** 0.3637
+- **CSLR:** 0.3832
+- **PCR (3y):** 7.60
+
+### WACBA (Weighted Average Cost of BTC Acquisition)
+
+- **WACBA:** $108,617.33 (1.4696x spot)
+- **ATM cost:** $86,332.52 (1.1681x spot)
+- **Convertible cost:** $83,148.03 (1.1250x spot)
+- **Preferred cost:** $240,205.42 (3.2500x spot)

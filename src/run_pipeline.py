@@ -8,17 +8,33 @@ import numpy as np
 
 from .calibration import build_model_params
 from .indicators import (
+    compute_cslr,
     compute_dividend_coverage_from_sim,
     compute_dividend_coverage_ratio,
+    compute_effective_kappa,
+    compute_fair_premium,
+    compute_fair_premium_timeseries,
     compute_ibgr_per_share,
     compute_ibgr_total,
     compute_ifrd,
     compute_ile_from_panel,
+    compute_mispricing,
+    compute_mispricing_zscore,
+    compute_pcr,
     compute_pmri,
+    compute_reflexivity_gain,
     compute_survival_probability,
     compute_tee_from_panel,
+    compute_tipping_point_premium,
+    compute_wacba,
 )
-from .plots import plot_capital_structure, plot_core_timeseries, plot_ifrd_histogram
+from .plots import (
+    plot_capital_structure,
+    plot_core_timeseries,
+    plot_fair_premium_vs_actual,
+    plot_ifrd_histogram,
+    plot_mispricing_timeseries,
+)
 from .preprocessing import build_daily_panel
 from .simulation import SimulationConfig, simulate_paths
 
@@ -120,6 +136,77 @@ def main() -> None:
         horizon_idx=horizon_idx,
     )
 
+    # 5b. New theory indicators
+    ile_current = float(ile_series.iloc[-1])
+    asset_val = h0 * s0
+    nav_current = asset_val - d0 - pref_liq
+    equity_mkt_cap = np.exp(pi0) * max(nav_current, 1.0)
+
+    # CSLR
+    cslr_current = compute_cslr(d0, pref_liq, equity_mkt_cap)
+
+    # PCR
+    pcr_current = compute_pcr(
+        asset_value=asset_val,
+        mu_s=params.mu_s,
+        annual_preferred_dividend=pref_div,
+        horizon_years=3.0,
+    )
+
+    # Fair premium (current)
+    r_discount = 0.04
+    pi_star_current = compute_fair_premium(
+        ibgr=ibgr_total,
+        sigma_s=params.sigma_s,
+        kappa=params.ou_premium.kappa,
+        ile=ile_current,
+        r=r_discount,
+    )
+
+    # Fair premium time series
+    pi_star_ts = compute_fair_premium_timeseries(panel, params, r=r_discount)
+
+    # Mispricing
+    delta_current, delta_label = compute_mispricing(pi0, pi_star_current)
+    delta_ts = panel["premium"].astype(float) - pi_star_ts
+    delta_z_ts = compute_mispricing_zscore(delta_ts)
+    delta_z_current = float(delta_z_ts.iloc[-1]) if len(delta_z_ts) > 0 else 0.0
+
+    # Reflexivity gain
+    # eta: market impact coefficient, estimated from MSTR purchase size vs daily BTC volume
+    eta = 0.02  # conservative estimate
+    lambda_bar = params.holdings.lambda_m * params.holdings.mean_jump_size / max(h0, 1.0)
+    reflexivity_G = compute_reflexivity_gain(
+        eta=eta,
+        ile=ile_current,
+        pi=pi0,
+        kappa=params.ou_premium.kappa,
+        lambda_bar=lambda_bar,
+    )
+
+    # Effective kappa
+    kappa_eff = compute_effective_kappa(params.ou_premium.kappa, reflexivity_G)
+
+    # Tipping point premium
+    pi_crit = compute_tipping_point_premium(
+        ile=ile_current,
+        ibgr=ibgr_total,
+        kappa=params.ou_premium.kappa,
+    )
+
+    # WACBA
+    wacba_result = compute_wacba(
+        pi=pi0,
+        ile=ile_current,
+        s=s0,
+        w_atm=0.60,
+        w_conv=0.25,
+        w_pfd=0.15,
+        coupon_conv=0.005,
+        div_pfd=0.09,
+        r=r_discount,
+    )
+
     # 6. Save indicator summary
     indicators = {
         "current_date": str(panel.index[-1].date()),
@@ -142,6 +229,21 @@ def main() -> None:
         "dividend_coverage_ratio_current": dcr_current,
         "dividend_coverage_ratio_3y_mean": dcr_sim["mean"],
         "dividend_coverage_prob_undercovered_3y": dcr_sim["prob_undercovered"],
+        # New theory indicators
+        "CSLR_current": cslr_current,
+        "PCR_current": pcr_current,
+        "pi_star_current": pi_star_current,
+        "mispricing_delta": delta_current,
+        "mispricing_label": delta_label,
+        "mispricing_zscore": delta_z_current,
+        "reflexivity_gain_G": reflexivity_G,
+        "kappa_effective": kappa_eff,
+        "tipping_point_premium": pi_crit,
+        "WACBA": wacba_result["wacba"],
+        "WACBA_ratio_to_spot": wacba_result["wacba_ratio"],
+        "WACBA_k_atm": wacba_result["k_atm"],
+        "WACBA_k_conv": wacba_result["k_conv"],
+        "WACBA_k_pfd": wacba_result["k_pfd"],
     }
 
     with open(RESULTS_DIR / "indicators.json", "w", encoding="utf-8") as f:
@@ -150,6 +252,8 @@ def main() -> None:
     # 7. Plots
     plot_core_timeseries(panel, ile_series, tee_series, FIGURES_DIR)
     plot_ifrd_histogram(G, FIGURES_DIR)
+    plot_fair_premium_vs_actual(panel, pi_star_ts, FIGURES_DIR)
+    plot_mispricing_timeseries(delta_ts, delta_z_ts, FIGURES_DIR)
 
     if pref is not None:
         plot_capital_structure(
@@ -211,6 +315,22 @@ def main() -> None:
         f.write("\n## Key Indicators\n\n")
         for k, v in indicators.items():
             f.write(f"- **{k}**: {v}\n")
+
+        f.write("\n## Theory Indicators (Endogenous Premium)\n\n")
+        f.write(f"- **Fair Premium (pi_star):** {pi_star_current:.4f}\n")
+        f.write(f"- **Actual Premium (pi):** {pi0:.4f}\n")
+        f.write(f"- **Mispricing (Delta):** {delta_current:.4f} ({delta_label})\n")
+        f.write(f"- **Mispricing Z-Score:** {delta_z_current:.2f}\n")
+        f.write(f"- **Reflexivity Gain (G):** {reflexivity_G:.4f}\n")
+        f.write(f"- **Effective Kappa:** {kappa_eff:.4f} (vs raw kappa={params.ou_premium.kappa:.4f})\n")
+        f.write(f"- **Tipping Point Premium:** {pi_crit:.4f}\n")
+        f.write(f"- **CSLR:** {cslr_current:.4f}\n")
+        f.write(f"- **PCR (3y):** {pcr_current:.2f}\n")
+        f.write(f"\n### WACBA (Weighted Average Cost of BTC Acquisition)\n\n")
+        f.write(f"- **WACBA:** ${wacba_result['wacba']:,.2f} ({wacba_result['wacba_ratio']:.4f}x spot)\n")
+        f.write(f"- **ATM cost:** ${wacba_result['k_atm']:,.2f} ({wacba_result['k_atm_ratio']:.4f}x spot)\n")
+        f.write(f"- **Convertible cost:** ${wacba_result['k_conv']:,.2f} ({wacba_result['k_conv_ratio']:.4f}x spot)\n")
+        f.write(f"- **Preferred cost:** ${wacba_result['k_pfd']:,.2f} ({wacba_result['k_pfd_ratio']:.4f}x spot)\n")
 
     # 10. Basic textual summary to stdout
     print("=== Capital Structure ===")
