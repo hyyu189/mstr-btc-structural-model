@@ -36,15 +36,8 @@ def simulate_paths(
     """
     Simulate joint paths of (S_t, pi_t, H_t, N_t, D_t, E_t, B_t, NAV_t).
 
-    The simulation is performed under the historical measure using:
-    - GBM for S_t with calibrated (mu_s, sigma_s).
-    - Exact discretization of OU for pi_t with parameters from ModelParams.
-    - Simple holdings dynamics with:
-        H_{t+dt} = H_t + alpha * pi_t^+ * dt + jump component,
-      where jumps are driven by a Poisson process with intensity lambda_M
-      and constant jump size equal to mean_jump_size.
-
-    Debt and share count are held constant at (d0, n0) over the horizon.
+    NAV includes preferred stock: NAV = H*S - D - P_liq.
+    Debt, share count, and preferred liquidation value are held constant.
     """
     if config is None:
         config = SimulationConfig()
@@ -58,6 +51,7 @@ def simulate_paths(
     ou = params.ou_premium
     rho = params.rho
     holdings = params.holdings
+    pref_liq = params.preferred_liq_0
 
     rng = np.random.default_rng(config.random_seed)
 
@@ -87,7 +81,7 @@ def simulate_paths(
     N[:, :] = float(n0)
 
     A[0, :] = H[0, :] * S[0, :]
-    NAV_raw[0, :] = A[0, :] - D[0, :]
+    NAV_raw[0, :] = A[0, :] - D[0, :] - pref_liq
     NAV[0, :] = np.maximum(NAV_raw[0, :], 0.0)
     NAV_clip[0, :] = np.maximum(NAV_raw[0, :], params.nav_floor)
     E[0, :] = np.exp(PI[0, :]) * NAV[0, :]
@@ -129,9 +123,9 @@ def simulate_paths(
 
         H[t + 1, :] = np.maximum(h_cont + h_jump, 0.0)
 
-        # Balance-sheet quantities.
+        # Balance-sheet quantities (NAV = Assets - Debt - Preferred Liquidation).
         A[t + 1, :] = H[t + 1, :] * S[t + 1, :]
-        NAV_raw[t + 1, :] = A[t + 1, :] - D[t + 1, :]
+        NAV_raw[t + 1, :] = A[t + 1, :] - D[t + 1, :] - pref_liq
         NAV[t + 1, :] = np.maximum(NAV_raw[t + 1, :], 0.0)
         NAV_clip[t + 1, :] = np.maximum(NAV_raw[t + 1, :], params.nav_floor)
 
@@ -152,5 +146,3 @@ def simulate_paths(
         "E": E,
         "B": B,
     }
-
-
