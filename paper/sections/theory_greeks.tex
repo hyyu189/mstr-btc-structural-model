@@ -1,0 +1,271 @@
+\section{Indicators as Option Greeks: A Unified Reinterpretation}
+\label{sec:greeks}
+
+The endogenous premium theory of Section~\ref{sec:theory} established that the NAV premium arises as the market value of a perpetual accumulation option. This section develops a natural consequence: if the premium reflects an option, then the diagnostic indicators of Section~\ref{sec:methodology} can be reinterpreted as \emph{option Greeks} --- sensitivities of the option's value to underlying risk factors. This reframing connects our structural model to the well-understood options pricing framework, provides economic intuition for the calibrated indicator values, and suggests new sensitivities not present in the base model.
+
+Throughout this section, we use the equity valuation identity $E_t = e^{\pi_t} \cdot (A_t - L_t)^+$ from Section~\ref{sec:methodology} and the fair premium formula $\pi_t^* = \log(1 + V_t^{\mathrm{acc}} / \mathrm{NAV}_t)$ from Proposition~\ref{prop:fair_premium}.
+
+%% ====================================================================
+\subsection{ILE as Delta: First-Order BTC Sensitivity}
+\label{subsec:ile_delta}
+
+In the standard options framework, \emph{delta} ($\Delta$) measures the first-order sensitivity of the option price to the underlying asset price. For a BTC treasury vehicle, the ``underlying'' is BTC and the ``option'' is the equity claim inclusive of the accumulation option.
+
+\begin{proposition}[ILE as Structural Delta]
+\label{prop:ile_delta}
+The Implied Leverage Elasticity is the log-delta of equity with respect to BTC price, holding the premium fixed:
+\begin{equation}
+\label{eq:ile_as_delta}
+  \mathrm{ILE}_t = \frac{\partial \log E_t}{\partial \log S_t}\bigg|_{\pi_t} = \frac{A_t}{A_t - L_t},
+\end{equation}
+which is the structural analogue of the delta of a leveraged call option on BTC with ``strike'' $L_t$ (total liabilities) and ``notional'' $A_t$ (BTC asset value).
+\end{proposition}
+
+\begin{proof}
+From the equity identity $E_t = e^{\pi_t}(A_t - L_t)^+$ with $A_t = H_t S_t$, holding $\pi_t$, $H_t$, and $L_t$ fixed:
+\begin{align*}
+  \frac{\partial \log E_t}{\partial \log S_t} &= \frac{S_t}{E_t} \cdot \frac{\partial E_t}{\partial S_t} = \frac{S_t}{e^{\pi_t}(H_t S_t - L_t)} \cdot e^{\pi_t} H_t = \frac{H_t S_t}{H_t S_t - L_t} = \frac{A_t}{A_t - L_t}.
+\end{align*}
+This has the form of a leveraged delta: when $L_t = 0$ (no liabilities), $\mathrm{ILE} = 1$ (pure delta-one exposure); when $L_t > 0$, $\mathrm{ILE} > 1$ (leveraged exposure), diverging as $A_t \to L_t$.
+\end{proof}
+
+\begin{remark}[Calibrated Value and Interpretation]
+\label{rem:ile_calibrated}
+The calibrated $\mathrm{ILE} = 1.172$ corresponds to the delta of a deep in-the-money call option with strike $L_0 = \$8.22$B against BTC assets $A_0 \approx \$56.1$B. The \emph{moneyness ratio} $A_0/L_0 \approx 6.8$ indicates the equity claim is far from the ``strike'' (distress boundary), analogous to a call option deep in the money where delta is close to~1. In the standard Black--Scholes framework, a call with this moneyness would have delta $\approx 0.99$; the ILE exceeds 1 because it measures \emph{log-elasticity} (percentage sensitivity) rather than dollar sensitivity, and leverage amplifies percentage moves.
+\end{remark}
+
+%% ====================================================================
+\subsection{TEE as Gamma-Adjusted Delta: Second-Order Sensitivity}
+\label{subsec:tee_gamma}
+
+While delta measures the first-order response, real-world option positions exhibit \emph{gamma} --- the curvature of the payoff that causes delta to change. The TEE captures the analogous second-order effect through the premium response channel.
+
+\begin{proposition}[TEE as Gamma-Adjusted Delta]
+\label{prop:tee_gamma}
+The Total Equity Elasticity decomposes into the structural delta (ILE) plus a premium response term that functions as a gamma-like correction:
+\begin{equation}
+\label{eq:tee_decomp}
+  \mathrm{TEE}_t = \underbrace{\gamma_{\pi S}}_{\text{premium gamma}} + \underbrace{\mathrm{ILE}_t}_{\text{structural delta}},
+\end{equation}
+where $\gamma_{\pi S} = \mathrm{Cov}(\Delta\pi_t, \Delta\log S_t) / \mathrm{Var}(\Delta\log S_t)$ is the premium's regression sensitivity to BTC returns. When $\gamma_{\pi S} < 0$, the premium compresses on BTC rallies, effectively providing \emph{negative gamma}: the option's effective delta decreases as BTC rises.
+\end{proposition}
+
+\begin{proof}
+The total equity elasticity is
+\[
+  \mathrm{TEE}_t = \frac{d\log E_t}{d\log S_t} = \frac{\partial \log E_t}{\partial \log S_t}\bigg|_{\pi_t} + \frac{\partial \log E_t}{\partial \pi_t} \cdot \frac{d\pi_t}{d\log S_t}.
+\]
+From $E_t = e^{\pi_t}(A_t - L_t)^+$, we have $\partial \log E_t / \partial \pi_t = 1$. The first term is $\mathrm{ILE}_t$ by Proposition~\ref{prop:ile_delta}. The second term is $d\pi_t / d\log S_t = \gamma_{\pi S}$, yielding~\eqref{eq:tee_decomp}.
+
+The analogy to gamma follows from the options framework: for a standard call, $\Delta_{\text{eff}} = \Delta + \Gamma \cdot \Delta S$, where $\Gamma$ captures how delta changes with the underlying. Here, $\gamma_{\pi S}$ plays the role of an \emph{integrated gamma} --- it captures how the effective exposure changes with BTC because the premium (which multiplies the entire NAV) responds to BTC moves.
+\end{proof}
+
+\begin{remark}[Calibrated Values: A Premium Cushion]
+\label{rem:tee_calibrated}
+The calibrated values $\mathrm{ILE} = 1.172$ and $\gamma_{\pi S} = -1.480$ yield $\mathrm{TEE} = -0.308$. This sign reversal is striking: the structural leverage amplifies BTC exposure ($+1.172$), but the premium compression more than offsets it ($-1.480$), producing a \emph{net negative elasticity}. In options language, the vehicle has \emph{positive structural delta but such large negative gamma that the total delta is negative} in the neighborhood of the calibration point.
+
+Economically, this reflects the ``buy the rumor, sell the news'' pattern ($\rho = -0.491$): when BTC rallies, the speculative premium compresses as the optionality embedded in the premium becomes less valuable (the option moves deeper in the money). The premium acts as an automatic stabilizer --- a shock absorber for equity holders.
+\end{remark}
+
+%% ====================================================================
+\subsection{PMRI as Theta: Time Decay of the Premium}
+\label{subsec:pmri_theta}
+
+In options pricing, \emph{theta} ($\Theta$) measures the rate at which an option's value decays with the passage of time, holding other factors constant. For MSTR, the PMRI captures an analogous phenomenon: the ``carry cost'' of holding a premium that deviates from its equilibrium level.
+
+\begin{proposition}[PMRI as Premium Theta]
+\label{prop:pmri_theta}
+Under the OU premium dynamics $d\pi_t = \kappa(\theta - \pi_t)\,dt + \sigma_\pi\, dW_t^\pi$, the expected instantaneous rate of premium change is
+\begin{equation}
+\label{eq:premium_drift}
+  \mathbb{E}_t\!\left[\frac{d\pi_t}{dt}\right] = \kappa(\theta - \pi_t) = -\kappa \cdot \frac{\sigma_\pi}{\sqrt{2\kappa}} \cdot \mathrm{PMRI},
+\end{equation}
+where $\mathrm{PMRI} = (\pi_0 - \theta) / (\sigma_\pi / \sqrt{2\kappa})$ is the standardized deviation from long-run equilibrium. Thus, $\mathrm{PMRI}$ determines the sign and magnitude of the premium's expected drift, exactly as theta determines the expected time decay of an option:
+\begin{itemize}
+  \item $\mathrm{PMRI} > 0$ (premium above equilibrium): the premium is expected to decay, analogous to positive theta for a short option position.
+  \item $\mathrm{PMRI} < 0$ (premium below equilibrium): the premium is expected to appreciate, analogous to negative theta for a long option that is ``underpriced'' by the market.
+\end{itemize}
+\end{proposition}
+
+\begin{proof}
+From the PMRI definition, $\pi_0 - \theta = \mathrm{PMRI} \cdot \sigma_\pi / \sqrt{2\kappa}$. Substituting into the OU drift:
+\[
+  \kappa(\theta - \pi_0) = -\kappa \cdot \mathrm{PMRI} \cdot \frac{\sigma_\pi}{\sqrt{2\kappa}} = -\frac{\sigma_\pi \sqrt{\kappa}}{\sqrt{2}} \cdot \mathrm{PMRI}.
+\]
+The expected premium change per unit time is therefore proportional to $-\mathrm{PMRI}$: positive PMRI implies expected premium decay (negative drift), and negative PMRI implies expected premium appreciation.
+\end{proof}
+
+\begin{remark}[Calibrated Value]
+\label{rem:pmri_calibrated}
+The calibrated $\mathrm{PMRI} = -1.506$ indicates the current premium ($\pi_0 = -0.042$) is 1.5 stationary standard deviations below the long-run mean ($\theta = 0.705$, corresponding to a $2.0\times$ NAV multiple). In options language, this is analogous to an option that is \emph{under-time-valued}: the market is pricing the accumulation option below its long-run fair value, and the expected ``theta'' is positive (the premium is expected to \emph{appreciate}, not decay). With a half-life of $\ln 2 / \kappa \approx 62$ days, the model implies the premium should recover roughly half the gap within two months.
+\end{remark}
+
+%% ====================================================================
+\subsection{IBGR as Moneyness: Intrinsic Value of the Accumulation Option}
+\label{subsec:ibgr_moneyness}
+
+In options pricing, \emph{moneyness} measures how far the underlying is from the strike price, determining how much intrinsic value the option carries. For the accumulation option, the relevant question is whether the issuance-and-accumulation strategy is currently value-creating.
+
+\begin{proposition}[IBGR as Moneyness Indicator]
+\label{prop:ibgr_moneyness}
+The Implied BTC Growth Rate determines the intrinsic value of the accumulation option. Specifically, the accumulation option is in the money when $\mathrm{IBGR} > 0$:
+\begin{equation}
+\label{eq:ibgr_moneyness}
+  V_t^{\mathrm{acc}} > 0 \iff \mathrm{IBGR}_t > 0 \quad \text{(under the sufficient condition } \pi_t > \log \mathrm{ELE}_t\text{)}.
+\end{equation}
+More precisely, the IBGR quantifies the rate at which intrinsic value is generated:
+\begin{equation}
+\label{eq:ibgr_intrinsic}
+  \frac{d}{dt}\!\left(\frac{V_t^{\mathrm{acc,intrinsic}}}{\mathrm{NAV}_t}\right) \propto \mathrm{IBGR}_t \cdot \left(\frac{e^{\pi_t}}{\mathrm{ELE}_t} - 1\right),
+\end{equation}
+where the first factor is the accumulation speed and the second is the accretion margin per unit of issuance.
+\end{proposition}
+
+\begin{proof}
+The IBGR measures the expected rate of BTC accumulation:
+\[
+  \mathrm{IBGR}_t = \frac{1}{H_t} \mathbb{E}_t^{\mathbb{P}}\!\left[\frac{dH_t}{dt}\right] \approx \frac{\alpha \pi_t^+ + \lambda_M \mathbb{E}[\Delta H]}{H_t}.
+\]
+When $\mathrm{IBGR} > 0$, BTC holdings are expected to grow, and if the premium exceeds the accretion threshold ($\pi_t > \log \mathrm{ELE}_t$), each unit of accumulation is accretive to BTC per share. The integrand of $V_t^{\mathrm{acc}}$ in~\eqref{eq:V_accretion} is therefore positive for a set of future times with positive measure, ensuring $V_t^{\mathrm{acc}} > 0$.
+
+The rate of intrinsic value generation follows from differentiating the accumulation option value: the BTC acquired per unit time ($\mathrm{IBGR} \cdot H_t$) times the dollar value per BTC acquired times the accretion margin yields the flow of option value.
+\end{proof}
+
+\begin{remark}[Calibrated Value: Deep in the Money]
+\label{rem:ibgr_calibrated}
+The calibrated $\mathrm{IBGR} = 18.3\%$ indicates the accumulation option is \emph{deep in the money}: Strategy is expected to grow its BTC holdings at 18.3\% per annum, driven by approximately 17.3 financing events per year at an average of 6,887~BTC each. In options terms, the high moneyness suggests the intrinsic value component dominates the time value --- the accumulation strategy is already generating substantial value, with additional upside from future premium fluctuations providing the ``time value'' component.
+\end{remark}
+
+%% ====================================================================
+\subsection{IFRD as Exercise Cost: The Strike Price of Accumulation}
+\label{subsec:ifrd_strike}
+
+Every option has an exercise cost --- the price that must be paid to realize the intrinsic value. For the accumulation option, this cost is the capital that must be raised and deployed to purchase BTC.
+
+\begin{proposition}[IFRD as Exercise Cost Distribution]
+\label{prop:ifrd_strike}
+The Implied Funding Requirement Distribution characterizes the exercise cost of the accumulation option over a given horizon:
+\begin{equation}
+\label{eq:ifrd_strike}
+  G_{\Delta t} = \int_0^{\Delta t} S_u\, dH_u,
+\end{equation}
+which is the cumulative dollar cost of BTC purchases. This is the analogue of the aggregate strike price in a series of sequential option exercises:
+\begin{itemize}
+  \item \textbf{Mean IFRD} $= \mathbb{E}[G_{\Delta t}]$: the expected total exercise cost over the horizon.
+  \item \textbf{IFRD tail} (e.g., $\mathrm{VaR}_{95\%}$): the extreme exercise cost under adverse scenarios (high BTC prices at acquisition time).
+  \item \textbf{IFRD / NAV ratio}: the exercise cost relative to the current intrinsic value, analogous to the strike-to-spot ratio in moneyness calculations.
+\end{itemize}
+\end{proposition}
+
+\begin{proof}
+The IFRD is defined as $G_{\Delta t} = \int_0^{\Delta t} S_u\, dH_u$ (Section~\ref{sec:methodology}). Each incremental BTC purchase $dH_u$ at price $S_u$ requires an outlay of $S_u\, dH_u$ dollars, which must be funded via equity issuance, convertible debt, or other instruments. This is precisely the ``exercise cost'' of converting market premium into BTC accumulation.
+
+The distribution matters because, unlike a standard call option with a fixed strike, the exercise cost here is stochastic: it depends on the BTC price path and the endogenous issuance timing. Higher BTC prices at the time of acquisition increase the dollar cost but also increase the NAV, creating a positive correlation between exercise cost and intrinsic value.
+\end{proof}
+
+\begin{remark}[Calibrated Values]
+\label{rem:ifrd_calibrated}
+The calibrated IFRD has mean \$38.3B and 95th percentile \$80.3B over three years. In options terms, the expected exercise cost is roughly 68\% of current NAV ($\approx\$56.1\text{B} - \$8.2\text{B} = \$47.9\text{B}$), indicating substantial capital deployment relative to the existing asset base. The right-skewed distribution (95th percentile more than double the mean) reflects the positive correlation between BTC prices and funding costs: in scenarios where BTC appreciates sharply, the dollar cost of accumulation rises, but so does the value of existing holdings.
+\end{remark}
+
+%% ====================================================================
+\subsection{New Greeks from the Option Framework}
+\label{subsec:new_greeks}
+
+The option reinterpretation not only clarifies existing indicators but suggests new sensitivities that are natural in the options framework but absent from the base model.
+
+\subsubsection{Vega: Sensitivity to BTC Volatility}
+\label{subsubsec:vega}
+
+\begin{proposition}[Premium Vega]
+\label{prop:vega}
+The sensitivity of the fair premium to BTC volatility is
+\begin{equation}
+\label{eq:vega_pi}
+  \mathcal{V}_\pi = \frac{\partial \pi_t^*}{\partial \sigma_S} > 0.
+\end{equation}
+That is, higher BTC volatility unambiguously increases the fair premium. Under the steady-state approximation of Proposition~\ref{prop:fair_premium_approx}, the vega operates through two channels:
+\begin{equation}
+\label{eq:vega_channels}
+  \mathcal{V}_\pi = \underbrace{\frac{\partial \pi^*}{\partial \mathbb{E}[(e^{\pi}/\ell - 1)^+]} \cdot \frac{\partial \mathbb{E}[(e^{\pi}/\ell - 1)^+]}{\partial \sigma_S}}_{\text{accretion convexity channel}} + \underbrace{\frac{\partial \pi^*}{\partial \sigma_\pi} \cdot \frac{\partial \sigma_\pi}{\partial \sigma_S}}_{\text{premium volatility channel}}.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+\emph{Channel 1 (Accretion convexity).} The accretion margin $(e^{\pi}/\ell - 1)^+$ is convex in $\pi$, which is driven by BTC returns through $\rho$. Higher $\sigma_S$ increases the dispersion of future $\pi$ paths, and by Jensen's inequality applied to the convex payoff, $\mathbb{E}[(e^{\pi}/\ell - 1)^+]$ increases. This raises $V_t^{\mathrm{acc}}$ and hence $\pi^*$.
+
+\emph{Channel 2 (Premium volatility).} The premium volatility $\sigma_\pi$ is linked to $\sigma_S$ through the correlation: $\mathrm{Var}(\Delta\pi) \ge \rho^2 \sigma_S^2 \Delta t$ (from the correlated Brownian motions). Higher $\sigma_S$ increases $\sigma_\pi$, which by Corollary~\ref{cor:comparative_statics} (item~1) raises the fair premium.
+
+Both channels are positive, establishing $\mathcal{V}_\pi > 0$. This is the direct analogue of positive vega for a call option: the accumulation option, like all options with convex payoffs, becomes more valuable when the underlying is more volatile.
+\end{proof}
+
+\begin{remark}[Quantitative Implication]
+\label{rem:vega_quant}
+At the current calibration ($\sigma_S = 0.488$), a 10 percentage point increase in BTC annualized volatility (from 48.8\% to 58.8\%) would increase the fair premium through both the accretion convexity channel (wider distribution of future accretion margins) and the premium volatility channel (more frequent episodes of high premium enabling aggressive issuance). This provides a structural explanation for the empirical observation that MSTR's premium tends to expand during periods of elevated BTC volatility --- it is not speculative froth but the rational repricing of enhanced optionality.
+\end{remark}
+
+\subsubsection{Rho: Sensitivity to Interest Rates}
+\label{subsubsec:rho_rate}
+
+\begin{proposition}[Premium Rate Sensitivity]
+\label{prop:rho_premium}
+The sensitivity of the fair premium to the risk-free rate $r$ is
+\begin{equation}
+\label{eq:rho_premium}
+  \mathcal{P}_\pi = \frac{\partial \pi_t^*}{\partial r} < 0.
+\end{equation}
+Higher interest rates reduce the fair premium through three channels:
+\begin{enumerate}
+  \item \textbf{Discount rate effect}: Higher $r$ increases the effective discount rate $r + \kappa - \mu_S$ in the accumulation option valuation~\eqref{eq:fair_premium_fp}, reducing the present value of future accretion.
+  \item \textbf{Funding cost effect}: Higher rates increase the cost of convertible debt issuance, reducing the IBGR because the BTC acquired per dollar of financing decreases when coupon obligations rise.
+  \item \textbf{Opportunity cost effect}: Higher rates make risk-free alternatives more attractive, reducing the demand for BTC exposure and compressing the premium through $\gamma_{\pi S}$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+From the steady-state formula~\eqref{eq:fair_premium_fp}:
+\[
+  \bar{\pi} = \log\!\left(1 + \frac{\bar{\lambda}\,(\bar{\pi} - \log\ell)^+ (e^{\bar{\pi}}/\ell - 1)}{r + \kappa - \mu_S}\right).
+\]
+The right-hand side is decreasing in $r$ (the denominator $r + \kappa - \mu_S$ increases while the numerator is independent of $r$). By the implicit function theorem applied to the fixed-point equation, $\partial\bar{\pi}/\partial r < 0$.
+
+For the funding cost channel, when $r$ increases, the coupon or conversion terms on new convertible debt become more expensive, reducing the net BTC acquired per issuance event. Formally, if the effective jump size $\mathbb{E}[\Delta H]$ depends on funding costs as $\mathbb{E}[\Delta H | r]$, then $\partial \mathbb{E}[\Delta H] / \partial r < 0$, which reduces IBGR and hence $V_t^{\mathrm{acc}}$.
+
+The opportunity cost channel operates through a modified premium process: higher $r$ shifts investor allocation away from BTC vehicles toward fixed income, compressing $\pi_t$ and reducing future issuance opportunities.
+\end{proof}
+
+\begin{remark}[Policy Implications]
+\label{rem:rho_policy}
+The negative premium rho has direct implications for Strategy's capital allocation. In a rising rate environment, the fair premium contracts: the accumulation option loses value because (i)~future accretion is discounted more heavily, (ii)~convertible debt terms deteriorate, and (iii)~BTC demand faces stiffer competition from yield-bearing assets. Conversely, rate cuts expand the fair premium, potentially catalyzing a transition from the discount regime to the flywheel regime (cf.\ Theorem~\ref{thm:multiple_equilibria}). This suggests that the Fed's monetary policy cycle is a material driver of optimal timing for BTC treasury vehicle issuance.
+\end{remark}
+
+%% ====================================================================
+\subsection{Summary: The Greek Correspondence}
+\label{subsec:greeks_summary}
+
+Table~\ref{tab:greeks} consolidates the mapping between the model's diagnostic indicators and the standard option Greeks.
+
+\begin{table}[H]
+\centering
+\caption{Indicator--Greek correspondence for the BTC treasury accumulation option.}
+\label{tab:greeks}
+\begin{tabular}{@{}llllr@{}}
+\toprule
+\textbf{Indicator} & \textbf{Greek} & \textbf{Measures} & \textbf{Sign} & \textbf{Calibrated} \\
+\midrule
+ILE & Delta ($\Delta$) & Equity sensitivity to BTC (leverage only) & $> 1$ & 1.172 \\
+TEE & Gamma-adj.\ $\Delta$ & Total equity sensitivity incl.\ premium & $\lessgtr 0$ & $-0.308$ \\
+PMRI & Theta ($\Theta$) & Expected premium drift (carry cost) & $\lessgtr 0$ & $-1.506$ \\
+IBGR & Moneyness & Intrinsic value generation rate & $\ge 0$ & 18.3\% \\
+IFRD & Exercise cost & Dollar cost of accumulation & $> 0$ & \$38.3B \\
+\midrule
+$\mathcal{V}_\pi$ & Vega ($\nu$) & Fair premium sensitivity to BTC vol & $> 0$ & --- \\
+$\mathcal{P}_\pi$ & Rho ($\rho$) & Fair premium sensitivity to rates & $< 0$ & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{remark}[Unified Interpretation]
+\label{rem:unified}
+The Greek correspondence reveals a coherent picture of Strategy's current state as of the calibration date. The equity claim is a deep in-the-money leveraged call on BTC (high ILE, high IBGR), but with a substantial negative gamma from premium compression (negative $\gamma_{\pi S}$) that reverses the net elasticity (negative TEE). The premium itself is ``undervalued'' relative to its long-run option value (negative PMRI), suggesting mean-reversion upward. The exercise cost of the accumulation option (IFRD) is large but well within the firm's demonstrated capital-raising capacity. Finally, the new Greeks --- positive vega and negative rho --- indicate that the fair premium is structurally supported by BTC's high volatility and the prevailing interest rate environment.
+\end{remark}
