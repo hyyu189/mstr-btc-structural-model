@@ -1,37 +1,64 @@
-# MSTR BTC Structural Model – Summary
+# Strategy (MSTR) BTC Structural Model -- Summary
 
-**As of date:** 2025-12-01
+**As of date:** 2026-03-17
+
+## Capital Structure
+
+- **BTC Holdings:** 761,068 BTC
+- **BTC Price:** $73,909.36
+- **BTC Asset Value:** $56.25B
+- **Debt:** $8.22B
+- **Preferred Liquidation Value:** $10.23B
+- **Preferred Annual Dividend:** $976.6M
+- **Common Shares:** 320.4M
+
+### Preferred Stock Detail
+
+| Ticker | Div Rate | Shares | Liq Value | Annual Div | Convertible |
+|--------|----------|--------|-----------|------------|-------------|
+| STRK | 8.0% | 12.8M | $1.28B | $102M | Yes |
+| STRF | 10.0% | 10.5M | $1.05B | $105M | No |
+| STRC | 9.6% | 50.0M | $5.00B | $479M | No |
+| STRD | 10.0% | 25.0M | $2.50B | $250M | No |
+| STRE | 10.0% | 5.0M | $0.40B | $40M | No |
 
 ## Calibrated Parameters
 
-- **mu_s**: 0.13954000049707402
-- **sigma_s**: 0.4882427962402235
-- **rho**: -0.49135027570212836
-- **gamma_pi_s**: -1.47976701597916
-- **debt_0**: 8222065000.000001
-- **shares_0**: 267713000.0
+- **mu_s**: 0.11119021353118116
+- **sigma_s**: 0.48649820207568567
+- **rho**: -0.3680159137155432
+- **gamma_pi_s**: -3.5970287536571397
+- **debt_0**: 8222070000.0
+- **shares_0**: 320440000.0
+- **preferred_liq_0**: 10229353900.0
+- **preferred_annual_div_0**: 976573822.0
 - **nav_floor**: 1.0
-- **ou_kappa**: 4.08122427000703
-- **ou_theta**: 0.7050547878679425
-- **ou_sigma**: 1.4168518034831818
+- **ou_kappa**: 5.2136544604770165
+- **ou_theta**: 1.0805109745558952
+- **ou_sigma**: 3.7943578361266157
 - **holdings_alpha**: 0.0
-- **holdings_lambda_m**: 17.294813979706877
-- **holdings_mean_jump_size**: 6886.8452380952385
+- **holdings_lambda_m**: 19.244145822245876
+- **holdings_mean_jump_size**: 6965.292929292929
 
 ## Key Indicators
 
-- **current_date**: 2025-12-01
-- **S0**: 86286.01
-- **H0**: 649870.0
-- **D0**: 8222065000.000001
-- **N0**: 267713000.0
-- **pi0**: -0.04184904343221719
-- **ILE_current**: 1.1718205661039776
-- **TEE_current**: -0.3079464498751825
-- **PMRI_current**: -1.5060884848024674
-- **IBGR_total_current**: 0.1832777437024132
-- **IBGR_per_share_3y**: 0.1837947421352409
-- **IFRD_mean**: 38302503823.41785
-- **IFRD_p95**: 80299210890.96898
-- **survival_prob_3y_eps0**: 0.9942
-- **survival_prob_3y_eps10pct**: 0.9932
+- **current_date**: 2026-03-17
+- **S0**: 73909.36
+- **H0**: 761068.0
+- **D0**: 8222070000.0
+- **N0**: 320440000.0
+- **preferred_liq_total**: 10229353900.0
+- **preferred_annual_div_total**: 976573822.0
+- **pi0**: 0.24216726950671505
+- **ILE_current**: 1.488150665547579
+- **TEE_current**: -2.108878088109561
+- **PMRI_current**: -0.7134605135110367
+- **IBGR_total_current**: 0.17612238699560523
+- **IBGR_per_share_3y**: 0.17588981194404743
+- **IFRD_mean**: 35397116866.59311
+- **IFRD_p95**: 73112738774.03625
+- **survival_prob_3y_eps0**: 0.917
+- **survival_prob_3y_eps10pct**: 0.8918
+- **dividend_coverage_ratio_current**: 49.18008010712374
+- **dividend_coverage_ratio_3y_mean**: 115.87980611652473
+- **dividend_coverage_prob_undercovered_3y**: 0.0104

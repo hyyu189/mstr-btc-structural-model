@@ -46,6 +46,10 @@ class ModelParams:
     debt_0: float
     shares_0: float
 
+    # Preferred stock
+    preferred_liq_0: float = 0.0
+    preferred_annual_div_0: float = 0.0
+
     # NAV floor used in log computations
     nav_floor: float = 1.0
 
@@ -57,11 +61,14 @@ class ModelParams:
             "gamma_pi_s": self.gamma_pi_s,
             "debt_0": self.debt_0,
             "shares_0": self.shares_0,
+            "preferred_liq_0": self.preferred_liq_0,
+            "preferred_annual_div_0": self.preferred_annual_div_0,
             "nav_floor": self.nav_floor,
         }
         d.update({f"ou_{k}": v for k, v in asdict(self.ou_premium).items()})
         d.update({f"holdings_{k}": v for k, v in asdict(self.holdings).items()})
         return d
+
 
 def _annualize_vol(returns: pd.Series, trading_days: int = 252) -> float:
     r = returns.dropna().astype(float)
@@ -77,15 +84,6 @@ def fit_btc_vol(
 ) -> float:
     """
     Estimate historical BTC volatility from log-returns.
-
-    Parameters
-    ----------
-    panel:
-        Processed panel with a ``price_col`` column.
-    price_col:
-        Column name for BTC price (default ``\"btc_price\"``).
-    start_date:
-        First date to include in the calibration sample.
     """
     df = panel.copy()
     df = df[df.index >= pd.to_datetime(start_date)]
@@ -100,13 +98,6 @@ def fit_ou_premium(
 ) -> OUParams:
     """
     Fit an OU process to the premium time series via AR(1) regression.
-
-    Discrete-time OU transition:
-        pi_{t+dt} = theta + (pi_t - theta) * exp(-kappa * dt) + noise
-
-    We estimate the AR(1) form:
-        pi_{t+1} = a + b * pi_t + eps
-    and back out (kappa, theta, sigma).
     """
     s = premium.dropna().astype(float)
     if len(s) < 10:
@@ -120,13 +111,11 @@ def fit_ou_premium(
     res = model.fit()
     a, b = res.params
 
-    # Guard against degenerate AR(1) estimates.
     b = float(np.clip(b, 1e-6, 1 - 1e-6))
     kappa = -np.log(b) / dt
     theta = a / (1.0 - b)
 
     resid_var = float(res.mse_resid)
-    # OU diffusion volatility from discrete residual variance.
     denom = 1.0 - np.exp(-2.0 * kappa * dt)
     sigma = np.sqrt(resid_var * 2.0 * kappa / denom)
 
@@ -139,20 +128,6 @@ def estimate_rho_and_gamma(
 ) -> Tuple[float, float]:
     """
     Estimate correlation and regression beta between BTC returns and premium changes.
-
-    Parameters
-    ----------
-    btc_log_returns:
-        Series of BTC log-returns.
-    premium_changes:
-        Series of premium changes (e.g. first differences).
-
-    Returns
-    -------
-    rho:
-        Linear correlation between returns and premium changes.
-    gamma_piS:
-        Regression slope from OLS: premium_changes = a + gamma * btc_log_returns + eps.
     """
     df = pd.concat(
         [btc_log_returns.rename("r_s"), premium_changes.rename("d_pi")],
@@ -179,11 +154,6 @@ def fit_holdings_dynamics(
 ) -> HoldingParams:
     """
     Estimate simple holdings dynamics from the panel.
-
-    - Continuous component alpha is estimated from non-event days (no discrete
-      BTC purchases) via regression of daily holdings changes on positive premium.
-    - Jump intensity lambda_m is the average number of purchase events per year.
-    - mean_jump_size is the average BTC purchased on event days.
     """
     df = panel.copy()
     df = df[df.index >= pd.to_datetime(start_date)]
@@ -194,7 +164,6 @@ def fit_holdings_dynamics(
     delta_h = h.diff().fillna(0.0)
     event_mask = delta_h != 0.0
 
-    # Continuous component regression on non-event days.
     non_event_mask = ~event_mask
     pi_pos = np.maximum(pi, 0.0)
     y_cont = delta_h[non_event_mask]
@@ -207,12 +176,10 @@ def fit_holdings_dynamics(
         y = y_cont.to_numpy()
         model = sm.OLS(y, X)
         res = model.fit()
-        # Robustness: if slope is numerically tiny, treat as zero.
         alpha = float(res.params[1])
         if not np.isfinite(alpha) or abs(alpha) < 1e-8:
             alpha = 0.0
 
-    # Jump statistics from purchase-history table when available.
     ph = load_btc_purchase_history()
     ph = ph.loc[
         (ph.index >= df.index.min())
@@ -225,7 +192,6 @@ def fit_holdings_dynamics(
         if jump_sizes.empty:
             jump_sizes = None
 
-    # Fallback: infer jumps from daily holdings if purchase history is unavailable or empty.
     if jump_sizes is None:
         jump_sizes = delta_h[event_mask]
 
@@ -252,22 +218,12 @@ def build_model_params(
     panel_calib: pd.DataFrame,
     nav_floor: float = 1.0,
     start_date: str = "2021-01-01",
+    preferred_liq_0: float = 0.0,
+    preferred_annual_div_0: float = 0.0,
 ) -> ModelParams:
     """
     Calibrate all core parameters and bundle them for simulation.
-
-    Parameters
-    ----------
-    panel:
-        Full processed panel.
-    panel_calib:
-        Calibration subset (e.g. from 2021-01-01, excluding tiny-NAV days).
-    nav_floor:
-        Floor used for log NAV in simulations.
-    start_date:
-        Start date for BTC drift/vol estimation.
     """
-    # BTC drift and volatility from log-returns.
     df = panel[panel.index >= pd.to_datetime(start_date)]
     prices = df["btc_price"].astype(float)
     log_ret = np.log(prices).diff().dropna()
@@ -276,18 +232,14 @@ def build_model_params(
     mu_s = float(log_ret.mean() * 252.0)
     sigma_s = _annualize_vol(log_ret)
 
-    # Premium OU on calibration subset.
     ou = fit_ou_premium(panel_calib["premium"])
 
-    # rho and gamma between BTC returns and premium changes (use same reduced sample).
     btc_log_ret = np.log(panel_calib["btc_price"].astype(float)).diff()
     premium_changes = panel_calib["premium"].astype(float).diff()
     rho, gamma_pi_s = estimate_rho_and_gamma(btc_log_ret, premium_changes)
 
-    # Holdings dynamics on full panel.
     holdings = fit_holdings_dynamics(panel, start_date=start_date)
 
-    # Baseline balance-sheet state from last observation.
     last = panel.iloc[-1]
     debt_0 = float(last["debt_total_usd"])
     shares_0 = float(last["shares"])
@@ -301,6 +253,7 @@ def build_model_params(
         holdings=holdings,
         debt_0=debt_0,
         shares_0=shares_0,
+        preferred_liq_0=preferred_liq_0,
+        preferred_annual_div_0=preferred_annual_div_0,
         nav_floor=float(nav_floor),
     )
-
