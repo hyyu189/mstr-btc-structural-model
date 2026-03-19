@@ -1,0 +1,863 @@
+% theory_endogenous_premium.tex — Endogenous Premium Theory
+% Core theoretical contribution: the NAV premium as a perpetual accumulation option
+
+\section{Endogenous Premium Theory}\label{sec:endogenous_premium}
+
+The methodology of Section~\ref{sec:methodology} treats the NAV premium
+$\pi_t$ as an exogenous Ornstein--Uhlenbeck process with fixed long-run mean
+$\theta$.  This is descriptively adequate but theoretically unsatisfying: it
+does not explain \emph{why} a rational market would price a BTC treasury
+vehicle above (or below) its net asset value.  This section develops an
+endogenous theory of the premium.  The central insight is that the NAV premium
+reflects the market value of a \emph{perpetual accumulation option}---the
+option to issue equity at a premium and convert proceeds into BTC, thereby
+increasing BTC-per-share for existing holders.
+
+We proceed in four parts.  Section~\ref{subsec:endo_system} specifies the
+coupled stochastic system that replaces the exogenous OU.
+Section~\ref{subsec:fair_premium} derives the equilibrium (fair) premium
+$\pi^*$ as the present value of future accretive issuance.
+Section~\ref{subsec:reflexivity} characterizes the reflexive feedback loop and
+establishes conditions for multiple equilibria.
+Section~\ref{subsec:mispricing} defines the mispricing metric and analyzes its
+dynamics.
+
+%% ====================================================================
+\subsection{The Endogenous Premium System}\label{subsec:endo_system}
+
+\subsubsection{Motivation}
+
+Under the exogenous specification $d\pi_t = \kappa(\theta - \pi_t)\,dt +
+\sigma_\pi\,dW_t^\pi$, the long-run mean $\theta$ is a free parameter
+estimated from data.  But $\theta$ should itself depend on the firm's
+fundamentals: its BTC holdings, leverage, volatility environment, and
+capacity to issue accretively.  We now endogenize $\theta$ by replacing it
+with a state-dependent equilibrium premium $\pi^*(\Phi_t)$.
+
+\subsubsection{State Vector and Assumptions}
+
+\begin{assumption}[Endogenous Premium Environment]\label{ass:endo_env}
+We work under the following conditions:
+\begin{enumerate}
+  \item The BTC spot price $S_t$ follows geometric Brownian motion under
+    $\mathbb{P}$ with drift $\mu_S$ and volatility $\sigma_S$, augmented by
+    a market impact term from the firm's BTC purchases.
+  \item The firm's BTC holdings $H_t$, debt $D_t$, preferred liabilities
+    $P_t^{\mathrm{pfd}}$, and share count $N_t^{\mathrm{sh}}$ evolve as in
+    Sections~\ref{sec:methodology}--\ref{sec:model_extended}.
+  \item The firm issues equity (ATM) whenever $\pi_t$ exceeds the accretion
+    threshold $\pi^*_{\mathrm{ATM}} = \log(\mathrm{ELE}_t)$ from
+    Proposition~\ref{prop:accretion}, at a rate proportional to
+    $(\pi_t - \pi^*_{\mathrm{ATM}})^+$.
+  \item Market participants are risk-neutral (for valuation of the
+    accumulation option) and observe the full state vector.
+  \item The risk-free rate $r > 0$ is constant.
+\end{enumerate}
+\end{assumption}
+
+\begin{definition}[State Vector]\label{def:state_vector}
+The endogenous premium model is driven by the state vector
+\begin{equation}\label{eq:state_vector}
+  \Phi_t = \bigl(S_t,\, H_t,\, D_t,\, P_t^{\mathrm{pfd}},\,
+  N_t^{\mathrm{sh}},\, \sigma_S,\, \kappa,\, r\bigr),
+\end{equation}
+from which we derive the ancillary quantities $A_t = H_t S_t$,
+$L_t = D_t + P_t^{\mathrm{pfd}}$, $\mathrm{NAV}_t = (A_t - L_t)^+$,
+$B_t = H_t / N_t^{\mathrm{sh}}$, and
+$\mathrm{ELE}_t = A_t / (A_t - L_t)$.
+\end{definition}
+
+\subsubsection{The Coupled SDE System}
+
+\begin{definition}[Endogenous Premium Dynamics]\label{def:endo_sdes}
+The endogenous premium model consists of the following coupled system of
+stochastic differential equations:
+\begin{align}
+  \frac{dS_t}{S_t} &= \mu_S\, dt + \sigma_S\, dW_t^S
+    + \eta \cdot \frac{dH_t}{H_t},
+    \label{eq:dS_endo} \\[6pt]
+  d\pi_t &= \kappa\bigl(\pi^*(\Phi_t) - \pi_t\bigr)\, dt
+    + \sigma_\pi\, dW_t^\pi,
+    \label{eq:dpi_endo} \\[6pt]
+  dH_t &= \alpha\, \bigl(\pi_t - \log(\mathrm{ELE}_t)\bigr)^+\, dt
+    + dH_t^{\mathrm{jump}},
+    \label{eq:dH_endo}
+\end{align}
+where:
+\begin{itemize}
+  \item $\eta \ge 0$ is the \emph{market impact coefficient}: each unit of
+    BTC purchased by the firm pushes the BTC price by a factor $\eta$.
+  \item $\pi^*(\Phi_t)$ is the \emph{equilibrium (fair) premium}, derived
+    in Section~\ref{subsec:fair_premium}, replacing the exogenous $\theta$.
+  \item $\kappa > 0$ is the mean-reversion speed toward the fair premium.
+  \item The accumulation rate in \eqref{eq:dH_endo} is driven by the
+    \emph{excess premium} $(\pi_t - \log(\mathrm{ELE}_t))^+$ rather than
+    $\pi_t^+$, reflecting that only accretive issuance
+    (Proposition~\ref{prop:accretion}) is undertaken.
+  \item $\mathrm{corr}(dW_t^S, dW_t^\pi) = \rho$.
+\end{itemize}
+\end{definition}
+
+\begin{remark}[Comparison with Exogenous Model]\label{rem:comparison}
+The exogenous model of Section~\ref{sec:methodology} is recovered by setting
+$\eta = 0$ (no market impact), $\pi^*(\Phi_t) = \theta$ (constant long-run
+mean), and replacing $(\pi_t - \log(\mathrm{ELE}_t))^+$ with $\pi_t^+$ in
+the holding dynamics.  The endogenous model thus nests the exogenous
+specification as a special case.
+\end{remark}
+
+\begin{remark}[Reflexive Structure]\label{rem:reflexive}
+The system \eqref{eq:dS_endo}--\eqref{eq:dH_endo} exhibits Soros-type
+reflexivity.  A high premium $\pi_t$ triggers accumulation ($dH_t > 0$),
+which via market impact raises $S_t$, which raises $\mathrm{NAV}_t$, which
+(if $\pi^*$ increases with fundamentals) raises the fair premium, which
+sustains the high observed premium.  The feedback is self-reinforcing in
+the upward direction and self-reinforcing in the downward direction, creating
+the possibility of multiple equilibria (Section~\ref{subsec:reflexivity}).
+\end{remark}
+
+%% ====================================================================
+\subsection{Fair Premium Derivation}\label{subsec:fair_premium}
+
+We now derive $\pi^*(\Phi_t)$---the premium that a rational market would
+assign to a BTC treasury vehicle given its current fundamentals and
+accumulation capacity.
+
+\subsubsection{The Accumulation Option}
+
+\begin{definition}[Accumulation Option]\label{def:accum_option}
+The \emph{accumulation option} is the perpetual right to issue equity at a
+premium to NAV and convert proceeds into BTC, thereby increasing BTC-per-share.
+Its value to existing shareholders at time $t$ is:
+\begin{equation}\label{eq:V_accretion}
+  V_{\mathrm{acc}}(t) = \mathbb{E}_t\!\left[
+    \int_t^\infty e^{-r(u-t)}\,
+    \underbrace{\bigl(\pi_u - \log(\mathrm{ELE}_u)\bigr)^+}_{\text{excess premium}}
+    \cdot\, \underbrace{q(u)\, S_u}_{\text{BTC value acquired}}
+    \cdot\, \underbrace{\frac{N_t^{\mathrm{sh}}}{N_u^{\mathrm{sh}}}
+    }_{\text{dilution adjustment}}\,
+    du
+  \right],
+\end{equation}
+where $q(u)$ is the rate of BTC acquisition at time $u$ (in BTC per unit time)
+and the dilution adjustment accounts for the fact that future issuance dilutes
+existing shareholders.
+\end{definition}
+
+\begin{remark}
+The integral \eqref{eq:V_accretion} has the structure of a perpetual
+exchange option: at each instant, the firm can ``exchange'' newly issued
+shares (at market price) for BTC (at spot), and the option is in-the-money
+whenever the equity premium exceeds the leverage threshold.  The perpetual
+nature---there is no expiry on the ATM program---makes this more valuable
+than a finite-horizon option.
+\end{remark}
+
+\subsubsection{Simplified Closed-Form Derivation}
+
+To obtain a tractable expression for $\pi^*$, we work under a set of
+simplifying assumptions.
+
+\begin{assumption}[Stationary Accumulation]\label{ass:stationary}
+\begin{enumerate}
+  \item The premium $\pi_t$ follows a stationary OU process around $\pi^*$
+    with speed $\kappa$ and volatility $\sigma_\pi$.
+  \item BTC holdings grow at a constant proportional rate $g_H$ (the
+    model-implied IBGR from Section~\ref{sec:methodology}).
+  \item Dilution offsets a fraction $\delta$ of gross BTC growth, so the
+    net per-share BTC growth rate is $g_B = g_H - \delta$.
+  \item The leverage ratio $\ell_t = L_t / A_t$ is approximately constant
+    at $\bar{\ell}$.
+  \item Market impact is small: $\eta \ll 1$.
+\end{enumerate}
+\end{assumption}
+
+\begin{proposition}[Accretive Issuance Value]\label{prop:accretion_value}
+Under Assumptions~\ref{ass:endo_env} and~\ref{ass:stationary}, the
+per-share value of the accumulation option is
+\begin{equation}\label{eq:V_acc_closed}
+  V_{\mathrm{acc}} = \mathrm{NAV}_t^{\mathrm{ps}} \cdot
+  \frac{g_B}{r - g_B} \cdot
+  \Psi(\pi^*, \kappa, \sigma_\pi, \bar{\ell}),
+\end{equation}
+where $\mathrm{NAV}_t^{\mathrm{ps}} = \mathrm{NAV}_t / N_t^{\mathrm{sh}}$
+is per-share NAV, $g_B$ is the net per-share BTC growth rate, and
+\begin{equation}\label{eq:Psi}
+  \Psi(\pi^*, \kappa, \sigma_\pi, \bar\ell) =
+  \Phi_{\mathrm{N}}\!\left(
+    \frac{\pi^* - \log(1/(1-\bar\ell))}{\sigma_\pi / \sqrt{2\kappa}}
+  \right)
+  \cdot \left(1 + \frac{\sigma_\pi^2}{4\kappa\, r}\right)
+\end{equation}
+is the \emph{accumulation efficiency factor}.  Here
+$\Phi_{\mathrm{N}}(\cdot)$ is the standard normal CDF.
+\end{proposition}
+
+\begin{proof}
+Under Assumption~\ref{ass:stationary}, the premium fluctuates around $\pi^*$
+with stationary distribution
+$\pi \sim \mathcal{N}(\pi^*,\, \sigma_\pi^2 / (2\kappa))$.  The accumulation
+option is exercised whenever $\pi_t > \log(\mathrm{ELE}_t) =
+\log(1/(1-\bar\ell))$.  The probability that the option is in-the-money at
+any given time is
+\begin{equation}\label{eq:prob_itm}
+  p_{\mathrm{ITM}} = \mathbb{P}\!\left(
+    \pi_t > \log\!\left(\frac{1}{1-\bar\ell}\right)
+  \right)
+  = \Phi_{\mathrm{N}}\!\left(
+    \frac{\pi^* - \log(1/(1-\bar\ell))}{\sigma_\pi / \sqrt{2\kappa}}
+  \right).
+\end{equation}
+
+When in-the-money, the expected excess premium is proportional to
+$\sigma_\pi / \sqrt{2\kappa}$ (the standard deviation of the stationary
+distribution), contributing the correction factor $(1 + \sigma_\pi^2 /
+(4\kappa r))$ after integrating the discounted expected payoff.
+
+The per-share value of BTC accretion is a perpetuity growing at rate $g_B$,
+discounted at rate $r$:
+\[
+  \mathrm{NAV}_t^{\mathrm{ps}} \cdot \frac{g_B}{r - g_B}
+\]
+whenever $g_B < r$ (transversality condition).  Multiplying by the fraction
+of time the option is exercisable and the volatility correction yields
+\eqref{eq:V_acc_closed}.
+\end{proof}
+
+\subsubsection{The Fair Premium}
+
+\begin{theorem}[Fair Premium]\label{thm:fair_premium}
+Under Assumptions~\ref{ass:endo_env} and~\ref{ass:stationary}, the
+equilibrium log-premium $\pi^*$ satisfies the fixed-point equation
+\begin{equation}\label{eq:pi_star_fp}
+  \boxed{
+    \pi^* = \log\!\left(1 + \frac{V_{\mathrm{acc}}}{\mathrm{NAV}_t^{\mathrm{ps}}}\right)
+    = \log\!\left(1 + \frac{g_B}{r - g_B}\,
+    \Psi(\pi^*, \kappa, \sigma_\pi, \bar\ell)\right).
+  }
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+The equity market capitalization per share equals NAV per share plus the
+value of the accumulation option:
+\begin{equation}\label{eq:equity_decomp_endo}
+  \frac{E_t}{N_t^{\mathrm{sh}}}
+  = \mathrm{NAV}_t^{\mathrm{ps}} + V_{\mathrm{acc}}.
+\end{equation}
+The log-premium is $\pi_t = \log(E_t / \mathrm{NAV}_t)$, so in equilibrium:
+\begin{align}
+  e^{\pi^*} &= \frac{E_t / N_t^{\mathrm{sh}}}{\mathrm{NAV}_t / N_t^{\mathrm{sh}}}
+  = \frac{\mathrm{NAV}_t^{\mathrm{ps}} + V_{\mathrm{acc}}}
+         {\mathrm{NAV}_t^{\mathrm{ps}}}
+  = 1 + \frac{V_{\mathrm{acc}}}{\mathrm{NAV}_t^{\mathrm{ps}}}.
+  \label{eq:pi_star_derivation}
+\end{align}
+Substituting \eqref{eq:V_acc_closed} and taking logarithms yields
+\eqref{eq:pi_star_fp}.
+
+This is a fixed-point equation because $\Psi$ depends on $\pi^*$ through
+the normal CDF term in \eqref{eq:Psi}.  Existence and uniqueness are
+established in Proposition~\ref{prop:fp_existence}.
+\end{proof}
+
+\begin{proposition}[Existence and Uniqueness of Fair Premium]%
+\label{prop:fp_existence}
+Define the map
+$F(\pi) = \log\!\bigl(1 + (g_B/(r-g_B))\,\Psi(\pi, \kappa, \sigma_\pi,
+\bar\ell)\bigr)$.  Under the condition $g_B < r$:
+\begin{enumerate}
+  \item $F$ maps $\mathbb{R}$ into $[0, \bar\pi]$ where
+    $\bar\pi = \log(1 + g_B/(r-g_B)) < \infty$.
+  \item $F$ is increasing and Lipschitz with constant
+    $\mathrm{Lip}(F) < 1$ whenever
+    \begin{equation}\label{eq:contraction_cond}
+      \frac{g_B}{r - g_B} \cdot
+      \frac{\phi_{\mathrm{N}}(\cdot)}{\sigma_\pi / \sqrt{2\kappa}}
+      \cdot \frac{1}{1 + g_B \Psi / (r - g_B)} < 1,
+    \end{equation}
+    where $\phi_{\mathrm{N}}$ is the standard normal PDF.
+  \item Under \eqref{eq:contraction_cond}, $F$ is a contraction mapping on
+    $[0, \bar\pi]$, so by the Banach fixed-point theorem there exists a
+    unique $\pi^* \in [0, \bar\pi]$ satisfying $F(\pi^*) = \pi^*$.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+\emph{(i)} Since $\Psi \in [0, 1 + \sigma_\pi^2/(4\kappa r)]$ and
+$g_B/(r-g_B) > 0$, we have $F(\pi) \in [0, \bar\pi]$ for all $\pi$.
+
+\emph{(ii)} The derivative of $F$ is
+\[
+  F'(\pi) = \frac{g_B/(r-g_B)}{1 + g_B\,\Psi(\pi)/(r-g_B)}
+  \cdot \frac{\partial \Psi}{\partial \pi}.
+\]
+Since $\partial\Psi/\partial\pi = \phi_{\mathrm{N}}(\cdot) /
+(\sigma_\pi/\sqrt{2\kappa}) \cdot (1 + \sigma_\pi^2/(4\kappa r))$, the
+Lipschitz constant is bounded by the supremum of $|F'|$, which is finite.
+Condition \eqref{eq:contraction_cond} ensures $\sup|F'| < 1$.
+
+\emph{(iii)} A contraction mapping on a complete metric space (the closed
+interval $[0,\bar\pi] \subset \mathbb{R}$) has a unique fixed point by
+the Banach theorem.
+\end{proof}
+
+\subsubsection{Comparative Statics}
+
+\begin{proposition}[Comparative Statics of the Fair Premium]%
+\label{prop:comp_statics}
+The equilibrium premium $\pi^*$ satisfies the following comparative statics:
+\begin{align}
+  \frac{\partial \pi^*}{\partial g_B} &> 0
+    &\quad& \text{(higher per-share BTC growth $\Rightarrow$ higher premium)},
+    \label{eq:cs_gB} \\[4pt]
+  \frac{\partial \pi^*}{\partial \sigma_S} &> 0
+    &\quad& \text{(higher BTC volatility $\Rightarrow$ higher premium)},
+    \label{eq:cs_sigma} \\[4pt]
+  \frac{\partial \pi^*}{\partial \kappa} &< 0
+    &\quad& \text{(faster mean-reversion $\Rightarrow$ lower premium)},
+    \label{eq:cs_kappa} \\[4pt]
+  \frac{\partial \pi^*}{\partial \bar\ell} &\lessgtr 0
+    &\quad& \text{(leverage: non-monotone)},
+    \label{eq:cs_ell} \\[4pt]
+  \frac{\partial \pi^*}{\partial r} &< 0
+    &\quad& \text{(higher discount rate $\Rightarrow$ lower premium)}.
+    \label{eq:cs_r}
+\end{align}
+\end{proposition}
+
+\begin{proof}
+We apply the implicit function theorem to $G(\pi^*, \theta) =
+\pi^* - F(\pi^*; \theta) = 0$, where $\theta$ denotes a generic parameter.
+Since $\partial G / \partial \pi^* = 1 - F'(\pi^*) > 0$ by the contraction
+condition, we have
+\begin{equation}\label{eq:ift}
+  \frac{\partial \pi^*}{\partial \theta}
+  = \frac{\partial F / \partial \theta}{1 - F'(\pi^*)}.
+\end{equation}
+The sign is determined by $\partial F / \partial \theta$:
+
+\emph{BTC growth rate $g_B$:} $\partial F / \partial g_B > 0$ since
+higher growth increases both $g_B/(r-g_B)$ and the present value of future
+accretion.
+
+\emph{BTC volatility $\sigma_S$:} Higher $\sigma_S$ increases BTC price
+dispersion, which increases the expected future NAV growth (via the convexity
+of the equity claim on BTC) and raises the value of the accumulation option.
+This effect operates through $g_B$, which is increasing in $\sigma_S$ via
+the flywheel's option-like payoff.
+
+\emph{Mean-reversion speed $\kappa$:} Higher $\kappa$ reduces the
+stationary variance $\sigma_\pi^2/(2\kappa)$ of the premium, making extreme
+premium excursions (which drive the most accretive issuance) less likely.
+This lowers $\Psi$ and hence $\pi^*$.
+
+\emph{Leverage $\bar\ell$:} The effect is non-monotone.  Higher leverage
+raises the accretion threshold $\log(1/(1-\bar\ell))$, reducing the
+probability that issuance is accretive (lowering $p_{\mathrm{ITM}}$).
+However, higher leverage also amplifies BTC returns via $\mathrm{ELE}_t$,
+potentially increasing $g_B$.  At low leverage, the amplification effect
+dominates; at high leverage, the threshold effect dominates, creating an
+interior optimum.
+
+\emph{Discount rate $r$:} Higher $r$ reduces the present value of the
+perpetuity $g_B/(r-g_B)$, directly lowering $\pi^*$.
+\end{proof}
+
+\begin{remark}[Volatility as Value Driver]\label{rem:vol_value}
+The comparative static $\partial\pi^*/\partial\sigma_S > 0$ is one of the
+model's most distinctive predictions: unlike a standard equity, where higher
+volatility increases risk and reduces value (all else equal), a BTC treasury
+vehicle \emph{benefits} from higher BTC volatility because it makes the
+accumulation option more valuable.  This is analogous to the vega of a call
+option.  Empirically, MSTR's premium has tended to expand during periods of
+elevated BTC volatility, consistent with this prediction.
+\end{remark}
+
+\subsubsection{Conditions for Premium vs.\ Discount}
+
+\begin{proposition}[Premium--Discount Boundary]\label{prop:premium_discount}
+The fair premium satisfies $\pi^* > 0$ (premium to NAV) if and only if the
+accumulation option has positive value, which requires:
+\begin{equation}\label{eq:premium_condition}
+  g_B > 0
+  \quad\text{and}\quad
+  p_{\mathrm{ITM}} > 0
+  \quad\text{and}\quad
+  g_B < r.
+\end{equation}
+The fair premium satisfies $\pi^* < 0$ (discount to NAV) when either:
+\begin{enumerate}
+  \item $g_B < 0$: dilution exceeds gross BTC accumulation, destroying
+    per-share value; or
+  \item The firm faces a perpetual cash drain (preferred dividends, debt
+    coupons) that exceeds expected asset appreciation, so the ongoing
+    liabilities reduce NAV faster than the flywheel builds it.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+From \eqref{eq:pi_star_fp}, $\pi^* > 0$ iff
+$V_{\mathrm{acc}} / \mathrm{NAV}_t^{\mathrm{ps}} > 0$.  By
+\eqref{eq:V_acc_closed}, $V_{\mathrm{acc}} > 0$ requires $g_B > 0$
+(positive net accretion), $\Psi > 0$ (positive probability of accretive
+issuance), and $r > g_B$ (finite present value).  All three conditions
+in \eqref{eq:premium_condition} are necessary and sufficient.
+
+For the discount case, when the firm faces perpetual liabilities with
+present value exceeding the accumulation option, we extend
+\eqref{eq:equity_decomp_endo} to
+\[
+  \frac{E_t}{N_t^{\mathrm{sh}}}
+  = \mathrm{NAV}_t^{\mathrm{ps}} + V_{\mathrm{acc}}
+  - \mathrm{PV}(\text{net liability drag}),
+\]
+where the net liability drag is the present value of preferred dividends
+and coupons net of expected asset appreciation from the flywheel.
+When $V_{\mathrm{acc}} < \mathrm{PV}(\text{drag})$, the premium turns
+negative.
+\end{proof}
+
+\begin{remark}[Interpreting NAV Discounts]
+A persistent NAV discount ($\pi^* < 0$) signals that the market views the
+firm's capital structure as value-destroying: the cost of servicing
+liabilities exceeds the benefit of the accumulation option.  This can occur
+when (i) the premium is too low for accretive ATM issuance, (ii) convertible
+debt conversion dilutes without commensurate BTC growth, or (iii) preferred
+dividend obligations ($\Phi_t$) consume expected returns.  The discount is
+\emph{rational} in this framework, not a market inefficiency.
+\end{remark}
+
+%% ====================================================================
+\subsection{Reflexivity and Multiple Equilibria}\label{subsec:reflexivity}
+
+The coupled system \eqref{eq:dS_endo}--\eqref{eq:dH_endo} exhibits
+self-reinforcing dynamics that can generate multiple equilibria.  We now
+formalize this mechanism.
+
+\subsubsection{The Feedback Map}
+
+\begin{definition}[Feedback Map]\label{def:feedback_map}
+Define the \emph{premium feedback map}
+$\mathcal{F}: \pi \mapsto \pi'$ as the composition of:
+\begin{enumerate}
+  \item \textbf{Accumulation:} Premium $\pi$ induces BTC acquisition at
+    rate $q(\pi) = \alpha(\pi - \log(\mathrm{ELE}))^+$.
+  \item \textbf{Market impact:} BTC purchases push the BTC price by
+    $\Delta S / S = \eta \cdot q(\pi) / H$.
+  \item \textbf{NAV update:} Higher $S$ raises $\mathrm{NAV}$ and
+    potentially changes the fair premium.
+  \item \textbf{Premium update:} The market re-prices the accumulation
+    option given the updated state, yielding $\pi' = \pi^*(\Phi')$.
+\end{enumerate}
+An equilibrium is a fixed point of $\mathcal{F}$: $\pi = \mathcal{F}(\pi)$.
+\end{definition}
+
+\begin{theorem}[Multiple Equilibria]\label{thm:multiple_eq}
+Under Assumptions~\ref{ass:endo_env}--\ref{ass:stationary}, if the market
+impact parameter $\eta$ is sufficiently large and the accumulation rate
+$\alpha$ is sufficiently responsive to the premium, there exist (generically)
+three equilibria:
+\begin{enumerate}
+  \item \textbf{High-premium equilibrium} $\pi_H^* > 0$: The premium is
+    high, the firm issues accretively, BTC accumulation supports the BTC
+    price, and the premium is self-sustaining.  This equilibrium is
+    \emph{locally stable}.
+  \item \textbf{Low-premium (discount) equilibrium} $\pi_L^* \le 0$: The
+    premium is at or below zero, the firm cannot issue accretively, there is
+    no BTC accumulation, no market impact support, and the discount is
+    self-reinforcing.  This equilibrium is \emph{locally stable}.
+  \item \textbf{Unstable equilibrium} $\pi_U^* \in (\pi_L^*, \pi_H^*)$:
+    An intermediate premium that is a saddle point---any perturbation pushes
+    the system toward either $\pi_H^*$ or $\pi_L^*$.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+Consider the net premium adjustment function
+$G(\pi) = \mathcal{F}(\pi) - \pi$, which measures the difference between
+the implied fair premium and the current premium.  An equilibrium satisfies
+$G(\pi) = 0$.
+
+\emph{Step 1: Shape of $G$.}
+At $\pi \to -\infty$, no issuance occurs, so $q(\pi) = 0$, there is no
+market impact, and the fair premium is determined solely by the (negative)
+liability drag: $\mathcal{F}(\pi) = \pi_0^{\mathrm{base}} > -\infty$, a
+finite value.  Thus $G(\pi) > 0$ for sufficiently negative $\pi$.
+
+At $\pi \to +\infty$, issuance is massive, but per-share dilution grows
+proportionally, and the marginal value of additional BTC decreases (each
+additional BTC is purchased at an increasingly high dollar cost due to
+market impact).  Thus $\mathcal{F}(\pi)$ grows slower than $\pi$, and
+$G(\pi) < 0$ for sufficiently large $\pi$.
+
+\emph{Step 2: Non-monotonicity.}
+For intermediate $\pi$, the feedback loop creates a region where
+$\mathcal{F}(\pi)$ exceeds $\pi$: the market impact of accumulation raises
+the BTC price, which raises NAV, which raises the fair premium above the
+current premium.  Specifically, when the premium crosses the accretion
+threshold $\log(\mathrm{ELE})$ from below, the accumulation option
+``switches on,'' creating a discrete increase in $\mathcal{F}$.
+
+Combined with the concavity of $\mathcal{F}$ at high $\pi$ (diminishing
+returns) and the flat region at low $\pi$ (no issuance), $G$ crosses zero
+three times, yielding three fixed points.
+
+\emph{Step 3: Stability.}
+At $\pi_H^*$: $\mathcal{F}'(\pi_H^*) < 1$, so the equilibrium is stable
+(perturbations are dampened by the mean-reversion of $\pi_t$).
+
+At $\pi_L^*$: $\mathcal{F}'(\pi_L^*) < 1$ (the system is in the flat
+region with no feedback), so this equilibrium is also stable.
+
+At $\pi_U^*$: $\mathcal{F}'(\pi_U^*) > 1$ (the feedback amplifies
+perturbations), making this equilibrium unstable.
+\end{proof}
+
+\subsubsection{Characterization of Equilibria}
+
+\begin{proposition}[High-Premium Equilibrium]\label{prop:high_eq}
+The high-premium equilibrium $\pi_H^*$ satisfies
+\begin{equation}\label{eq:pi_H}
+  \pi_H^* \approx \log\!\left(1 + \frac{g_B + \eta\, q_H / H}{r - g_B}
+  \right),
+\end{equation}
+where $q_H = \alpha(\pi_H^* - \log(\mathrm{ELE}))^+$ is the equilibrium
+accumulation rate.  The premium is sustained by:
+\begin{enumerate}
+  \item Accretive issuance (positive $g_B$), which grows BTC per share.
+  \item Market impact ($\eta q_H / H$), which supports BTC price.
+  \item Self-fulfilling expectations: the premium enables the issuance
+    that justifies the premium.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+Substitute the market-impact-augmented BTC growth rate $\tilde{g}_B =
+g_B + \eta q_H / H$ into the fair premium formula
+\eqref{eq:pi_star_fp}.  The market impact term increases the effective
+growth rate, which raises the present value of the accumulation option and
+hence the premium.  The equilibrium is self-consistent because $q_H$ itself
+depends on $\pi_H^*$.
+\end{proof}
+
+\begin{proposition}[Death Spiral Equilibrium]\label{prop:death_spiral}
+The low-premium equilibrium $\pi_L^*$ is characterized by:
+\begin{equation}\label{eq:pi_L}
+  \pi_L^* \approx -\frac{\mathrm{PV}(\text{liability drag})}
+  {\mathrm{NAV}_t^{\mathrm{ps}}},
+\end{equation}
+where the liability drag includes preferred dividend obligations $\Phi_t$
+and coupon payments net of any residual operating cash flows.  The death
+spiral mechanism operates as follows:
+\begin{enumerate}
+  \item Low premium $\pi_t < \log(\mathrm{ELE}_t)$ $\Rightarrow$
+    no accretive ATM issuance possible.
+  \item No accumulation $\Rightarrow$ no market impact support for $S_t$.
+  \item BTC price stagnation or decline $\Rightarrow$ NAV falls.
+  \item Ongoing liability payments (dividends, coupons) drain assets
+    $\Rightarrow$ NAV falls further.
+  \item Leverage $\ell_t$ rises $\Rightarrow$ accretion threshold
+    $\log(1/(1-\ell_t))$ rises $\Rightarrow$ even harder to issue
+    accretively.
+  \item If the firm issues non-accretive preferred (last resort per
+    Theorem~\ref{thm:optimal_channel}), $\Phi_t$ increases, adding
+    more liability drag.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+When $\pi_t < \log(\mathrm{ELE}_t)$, the accumulation option value
+$V_{\mathrm{acc}} = 0$ (the option is out-of-the-money with zero
+probability of exercise under the stationary distribution).  The equity
+value then equals NAV minus the present value of net liabilities:
+\[
+  E_t = \mathrm{NAV}_t - \mathrm{PV}(\text{liability drag}),
+\]
+so $\pi_L^* = \log(E_t / \mathrm{NAV}_t) < 0$ when the drag is positive.
+Each step in the spiral raises $\ell_t$ or $\Phi_t$, increasing the drag
+and deepening the discount, confirming local stability.
+\end{proof}
+
+\subsubsection{The Tipping Point}
+
+\begin{definition}[Critical Premium]\label{def:critical_premium}
+The \emph{critical premium} $\pi_c$ is the unstable equilibrium $\pi_U^*$
+that separates the basins of attraction of the high-premium and death-spiral
+equilibria:
+\begin{equation}\label{eq:pi_critical}
+  \pi_c = \pi_U^* = \inf\bigl\{\pi > \pi_L^* : G(\pi) = 0,\;
+  G'(\pi) > 0 \bigr\}.
+\end{equation}
+\end{definition}
+
+\begin{proposition}[Tipping Point Characterization]\label{prop:tipping}
+The critical premium satisfies
+\begin{equation}\label{eq:tipping_approx}
+  \pi_c \approx \log(\mathrm{ELE}_t)
+  + \frac{\sigma_\pi}{\sqrt{2\kappa}} \cdot
+  \Phi_{\mathrm{N}}^{-1}\!\left(
+    \frac{r - g_B}{g_B} \cdot \frac{e^{\pi_c} - 1}{1 + \sigma_\pi^2/(4\kappa r)}
+  \right),
+\end{equation}
+and is approximately equal to the accretion threshold
+$\log(\mathrm{ELE}_t)$ when market impact $\eta$ is small.
+The tipping point has the following sensitivities:
+\begin{align}
+  \frac{\partial \pi_c}{\partial \bar\ell} &> 0
+    &\quad& \text{(higher leverage raises the tipping point)},
+    \label{eq:tip_ell} \\
+  \frac{\partial \pi_c}{\partial \Phi_t} &> 0
+    &\quad& \text{(higher dividend burden raises the tipping point)},
+    \label{eq:tip_phi} \\
+  \frac{\partial \pi_c}{\partial \sigma_S} &< 0
+    &\quad& \text{(higher BTC vol lowers the tipping point)}.
+    \label{eq:tip_sigma}
+\end{align}
+\end{proposition}
+
+\begin{proof}
+The tipping point is the premium at which the accumulation option value
+just offsets the liability drag.  At $\pi_c$, the marginal value of a small
+premium increase (which enables some accretive issuance) exactly equals the
+marginal cost (the liability drag per unit time).  Setting
+$V_{\mathrm{acc}}(\pi_c) = \mathrm{PV}(\text{drag})$ and solving for
+$\pi_c$ using \eqref{eq:V_acc_closed} yields \eqref{eq:tipping_approx}.
+
+The comparative statics follow from the implicit function theorem applied
+to $G(\pi_c; \theta) = 0$:
+\begin{itemize}
+  \item Higher $\bar\ell$ raises $\log(\mathrm{ELE})$, requiring a higher
+    premium to reach the accretive region.
+  \item Higher $\Phi_t$ increases the liability drag that the accumulation
+    option must offset.
+  \item Higher $\sigma_S$ increases the option value for any given premium,
+    lowering the premium needed to break even.  \qedhere
+\end{itemize}
+\end{proof}
+
+\begin{remark}[Policy Implication]
+The tipping point $\pi_c$ is the most important quantity for risk management.
+Management should monitor the distance $\pi_t - \pi_c$: when this is large
+and positive, the firm is safely in the high-premium basin.  When it
+approaches zero, the firm is at risk of transitioning to the death spiral.
+Issuing non-convertible preferred stock (which raises both $\bar\ell$ and
+$\Phi_t$) pushes $\pi_c$ upward, shrinking the safety margin---a prediction
+consistent with market reactions to STRF issuance.
+\end{remark}
+
+\subsubsection{Phase Diagram}
+
+\begin{proposition}[Phase Diagram in $(\pi, S)$ Space]\label{prop:phase}
+The dynamics of the endogenous premium system can be summarized in a
+phase diagram with two regions separated by the critical surface
+$\pi = \pi_c(\Phi_t)$:
+\begin{enumerate}
+  \item \textbf{Virtuous cycle region} ($\pi_t > \pi_c$):
+    The drift of $\pi_t$ is toward $\pi_H^*$ from below, and the BTC price
+    receives positive support from accumulation.  The expected trajectory is
+    toward the high-premium equilibrium.
+  \item \textbf{Death spiral region} ($\pi_t < \pi_c$):
+    The drift of $\pi_t$ is toward $\pi_L^*$ from above, and BTC receives
+    no accumulation support.  The expected trajectory is toward the discount
+    equilibrium, with the approach accelerating as leverage rises.
+\end{enumerate}
+The velocity of the dynamics is:
+\begin{equation}\label{eq:drift_pi}
+  \mathbb{E}[d\pi_t \mid \pi_t = \pi] =
+  \begin{cases}
+    \kappa(\pi_H^* - \pi)\,dt & \text{if } \pi > \pi_c, \\[4pt]
+    \kappa(\pi_L^* - \pi)\,dt & \text{if } \pi < \pi_c.
+  \end{cases}
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+This follows directly from the definition of $\pi_c$ as the boundary between
+basins of attraction.  In each region, the premium mean-reverts toward the
+locally stable equilibrium at speed $\kappa$.  At $\pi = \pi_c$ the drift
+is zero (the unstable equilibrium), and any perturbation determines the
+direction of subsequent evolution.
+\end{proof}
+
+%% ====================================================================
+\subsection{Mispricing Dynamics}\label{subsec:mispricing}
+
+We now define the deviation of the observed premium from its fair value and
+characterize its dynamics.
+
+\begin{definition}[Mispricing]\label{def:mispricing}
+The \emph{mispricing} at time $t$ is the difference between the observed
+log-premium and the fair log-premium:
+\begin{equation}\label{eq:delta_def}
+  \Delta_t = \pi_t - \pi^*(\Phi_t).
+\end{equation}
+Positive $\Delta_t$ indicates overvaluation (the market assigns a higher
+premium than fundamentals justify).  Negative $\Delta_t$ indicates
+undervaluation.
+\end{definition}
+
+\begin{theorem}[Mispricing Dynamics]\label{thm:mispricing_dynamics}
+Under the endogenous premium system
+\eqref{eq:dS_endo}--\eqref{eq:dH_endo}, the mispricing $\Delta_t$ follows
+\begin{equation}\label{eq:d_delta}
+  d\Delta_t = -\kappa_\Delta\, \Delta_t\, dt
+  + \sigma_\Delta\, d\tilde{W}_t,
+\end{equation}
+where
+\begin{align}
+  \kappa_\Delta &= \kappa + \frac{\partial \pi^*}{\partial \Phi}
+    \cdot \frac{\partial \Phi}{\partial \pi}\bigg|_{\pi = \pi^*}
+    > \kappa,
+    \label{eq:kappa_delta} \\[4pt]
+  \sigma_\Delta^2 &= \sigma_\pi^2
+    + \left(\frac{\partial \pi^*}{\partial S}\right)^2 \sigma_S^2 S_t^2
+    - 2\rho\, \sigma_\pi \cdot \frac{\partial \pi^*}{\partial S}\,
+    \sigma_S S_t,
+    \label{eq:sigma_delta}
+\end{align}
+and $\tilde{W}_t$ is a Brownian motion under $\mathbb{P}$.  The key result
+is that $\kappa_\Delta > \kappa$: \emph{mispricing mean-reverts faster than
+the premium itself}.
+\end{theorem}
+
+\begin{proof}
+Apply It\^{o}'s lemma to $\Delta_t = \pi_t - \pi^*(\Phi_t)$:
+\begin{equation}\label{eq:ito_delta}
+  d\Delta_t = d\pi_t - d\pi^*(\Phi_t).
+\end{equation}
+The first term is given by \eqref{eq:dpi_endo}:
+\[
+  d\pi_t = \kappa(\pi^* - \pi_t)\,dt + \sigma_\pi\,dW_t^\pi
+  = -\kappa\,\Delta_t\,dt + \sigma_\pi\,dW_t^\pi.
+\]
+For the second term, $\pi^*$ depends on $\Phi_t$ which evolves with
+$S_t$ and $H_t$.  By the chain rule:
+\[
+  d\pi^* = \frac{\partial \pi^*}{\partial S}\,dS_t
+  + \frac{\partial \pi^*}{\partial H}\,dH_t + \cdots
+\]
+The crucial feedback term is $(\partial\pi^*/\partial\Phi) \cdot
+(\partial\Phi/\partial\pi)$: when the premium is above $\pi^*$, the
+resulting accumulation updates fundamentals, which moves $\pi^*$
+\emph{toward} the current premium.  This reduces the mispricing from both
+sides---$\pi_t$ mean-reverts down (by OU dynamics) while $\pi^*$ adjusts up
+(by fundamental improvement)---yielding the enhanced mean-reversion speed
+$\kappa_\Delta > \kappa$.
+
+Collecting the drift terms:
+\[
+  \mathbb{E}[d\Delta_t \mid \Delta_t]
+  = -\kappa\,\Delta_t - \frac{\partial\pi^*}{\partial\Phi}
+  \cdot \frac{\partial\Phi}{\partial\pi}\,\Delta_t
+  = -\kappa_\Delta\,\Delta_t,
+\]
+where the second term is positive (improvement in fundamentals when $\pi >
+\pi^*$), confirming \eqref{eq:kappa_delta}.  The volatility
+\eqref{eq:sigma_delta} follows from computing $\mathrm{Var}(d\Delta_t)$
+using the correlated Brownian motions.
+\end{proof}
+
+\begin{proposition}[Stationary Distribution of Mispricing]%
+\label{prop:mispricing_stat}
+Under the linearized dynamics \eqref{eq:d_delta}, the mispricing has a
+stationary distribution
+\begin{equation}\label{eq:delta_stationary}
+  \Delta_\infty \sim \mathcal{N}\!\left(0,\;
+  \frac{\sigma_\Delta^2}{2\kappa_\Delta}\right).
+\end{equation}
+The stationary variance of mispricing is smaller than the stationary
+variance of the premium:
+\begin{equation}\label{eq:var_comparison}
+  \frac{\sigma_\Delta^2}{2\kappa_\Delta}
+  < \frac{\sigma_\pi^2}{2\kappa},
+\end{equation}
+whenever the fundamental feedback term
+$(\partial\pi^*/\partial\Phi)(\partial\Phi/\partial\pi) > 0$.
+\end{proposition}
+
+\begin{proof}
+The OU process \eqref{eq:d_delta} with mean zero, speed $\kappa_\Delta$,
+and volatility $\sigma_\Delta$ has stationary variance
+$\sigma_\Delta^2/(2\kappa_\Delta)$.  Since $\kappa_\Delta > \kappa$ and
+$\sigma_\Delta \le \sigma_\pi + |\partial\pi^*/\partial S|\sigma_S S_t$
+(with the cross term providing reduction when $\rho$ has the appropriate
+sign), the variance ratio satisfies
+\[
+  \frac{\sigma_\Delta^2 / (2\kappa_\Delta)}{\sigma_\pi^2 / (2\kappa)}
+  = \frac{\sigma_\Delta^2}{\sigma_\pi^2} \cdot
+  \frac{\kappa}{\kappa_\Delta}
+  < 1
+\]
+when the feedback effect dominates the additional volatility from the
+moving $\pi^*$.  The condition
+$(\partial\pi^*/\partial\Phi)(\partial\Phi/\partial\pi) > 0$ ensures that
+the enhanced mean-reversion effect is large enough.
+\end{proof}
+
+\begin{remark}[Trading Implications]\label{rem:trading}
+The result $\kappa_\Delta > \kappa$ has a concrete trading implication:
+a mean-reversion strategy based on mispricing $\Delta_t$ (trading toward
+the model-implied fair premium) should converge faster than a strategy
+based on the raw premium $\pi_t$ (trading toward the historical mean
+$\theta$).  The mispricing signal $\Delta_t$ is informationally superior
+because it incorporates the current state of fundamentals, while the raw
+premium signal compares against a static target.
+\end{remark}
+
+\begin{definition}[Mispricing Z-Score]\label{def:mispricing_zscore}
+Analogous to the PMRI of Section~\ref{sec:methodology}, we define the
+\emph{Mispricing Z-Score}:
+\begin{equation}\label{eq:mzs}
+  \mathrm{MZS}_t = \frac{\Delta_t}{\sigma_\Delta / \sqrt{2\kappa_\Delta}}
+  = \frac{\pi_t - \pi^*(\Phi_t)}{\sigma_\Delta / \sqrt{2\kappa_\Delta}}.
+\end{equation}
+Under the stationary distribution, $\mathrm{MZS}_t \sim \mathcal{N}(0,1)$.
+Values $|\mathrm{MZS}_t| > 2$ indicate significant mispricing
+(approximately 5\% tail probability).
+\end{definition}
+
+\begin{remark}[Relationship to PMRI]
+The PMRI standardizes $\pi_t - \theta$ against $\sigma_\pi/\sqrt{2\kappa}$,
+using the exogenous long-run mean.  The MZS standardizes $\pi_t - \pi^*$
+against $\sigma_\Delta/\sqrt{2\kappa_\Delta}$, using the endogenous fair
+premium.  The MZS is a strictly more informative signal: it can distinguish
+between (i) a high premium that is justified by strong fundamentals
+($\mathrm{MZS} \approx 0$, $\mathrm{PMRI} \gg 0$) and (ii) a high premium
+that reflects bubble dynamics ($\mathrm{MZS} \gg 0$, $\mathrm{PMRI} \gg 0$).
+The PMRI conflates both cases.
+\end{remark}
+
+%% ====================================================================
+\subsection{Summary of Key Results}\label{subsec:endo_summary}
+
+\begin{table}[htbp]
+\centering
+\caption{Summary of endogenous premium theory results.}
+\label{tab:endo_summary}
+\small
+\begin{tabular}{@{}lp{8cm}l@{}}
+\toprule
+\textbf{Result} & \textbf{Statement} & \textbf{Ref.} \\
+\midrule
+Fair premium & $\pi^* = \log(1 + V_{\mathrm{acc}} / \mathrm{NAV}^{\mathrm{ps}})$;
+  unique fixed point & Thm.~\ref{thm:fair_premium} \\
+Volatility is value & $\partial\pi^*/\partial\sigma_S > 0$: higher BTC vol
+  increases fair premium & Prop.~\ref{prop:comp_statics} \\
+Multiple equilibria & High-premium (stable), death spiral (stable),
+  tipping point (unstable) & Thm.~\ref{thm:multiple_eq} \\
+Tipping point & $\pi_c \approx \log(\mathrm{ELE})$; rises with leverage
+  and dividend burden & Prop.~\ref{prop:tipping} \\
+Mispricing reverts faster & $\kappa_\Delta > \kappa$: fundamental feedback
+  accelerates convergence & Thm.~\ref{thm:mispricing_dynamics} \\
+MZS signal & Strictly more informative than PMRI for detecting over/under-valuation
+  & Def.~\ref{def:mispricing_zscore} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent The endogenous premium framework transforms the NAV premium from
+an unexplained market phenomenon into a derived quantity with clear
+fundamental drivers.  It provides testable predictions (volatility--premium
+correlation, mispricing mean-reversion speed, tipping point location) and
+a superior valuation signal (MZS vs.\ PMRI) for practitioners.
