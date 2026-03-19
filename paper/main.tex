@@ -1,6 +1,6 @@
 \documentclass[11pt,a4paper]{article}
 
-\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
 \usepackage{hyperref}
 \usepackage[round]{natbib}
 \usepackage{booktabs}
@@ -11,6 +11,11 @@
 
 \geometry{margin=1in}
 \onehalfspacing
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}[theorem]{Remark}
 
 \hypersetup{
   colorlinks=true,
@@ -37,7 +42,11 @@ UCLA Anderson School of Management\\
 
 \input{sections/introduction}
 
+\input{sections/literature_review}
+
 \input{sections/methodology}
+
+\input{sections/model_extended}
 
 \input{sections/results}
 

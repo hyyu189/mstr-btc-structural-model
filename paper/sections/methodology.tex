@@ -118,7 +118,7 @@ The structural relation linking equity, assets, debt, and premium is:
     E_t = e^{\pi_t} \cdot (H_t S_t - D_t)^+.
     \label{eq:equity_identity}
 \end{equation}
-This identity decomposes equity market capitalization into NAV (the intrinsic balance-sheet value) and the exponential of the log-premium (the market's sentiment multiplier). The premium absorbs all factors not captured by current-snapshot NAV: expected future accretion, management optionality, liquidity, and speculative demand.
+This identity holds exactly when $\text{NAV}_t > \varepsilon$ (i.e., outside the distress regime where $\text{NAV}_t^{\text{clip}} = \text{NAV}_t$). It decomposes equity market capitalization into NAV (the intrinsic balance-sheet value) and the exponential of the log-premium (the market's sentiment multiplier). The premium absorbs all factors not captured by current-snapshot NAV: expected future accretion, management optionality, liquidity, and speculative demand.
 
 \subsection{Diagnostic Indicators}
 
@@ -178,9 +178,9 @@ Monte Carlo over simulated paths provides the empirical distribution of $G_{\Del
 
 \subsection{Survival and Distress Analysis}
 
-Define a distress event as the first time BTC asset value breaches the debt boundary with buffer $\varepsilon \ge 0$:
+Define a distress event as the first time BTC asset value breaches the debt boundary with buffer $\varepsilon_d \ge 0$:
 \begin{equation}
-    \tau = \inf\{u \in [0,T] : H_u S_u \le (1+\varepsilon) D_u\}.
+    \tau = \inf\{u \in [0,T] : H_u S_u \le (1+\varepsilon_d) D_u\}.
 \end{equation}
 The survival probability over horizon $T$ is:
 \begin{equation}
