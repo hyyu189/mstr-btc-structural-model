@@ -1,0 +1,576 @@
+\section{Endogenous Premium Theory: The Perpetual Accumulation Option}
+\label{sec:theory}
+
+The base model of Section~\ref{sec:methodology} treats the NAV premium $\pi_t$ as an exogenous Ornstein--Uhlenbeck process --- descriptively adequate for calibration, but silent on \emph{why} a premium exists or what determines its equilibrium level. This section develops the paper's central theoretical contribution: the NAV premium is endogenous, arising as the market value of a \textbf{perpetual accumulation option} embedded in the BTC treasury vehicle's corporate structure. We derive the fair premium from first principles, characterize the reflexive feedback loop between premium and fundamentals, establish conditions for multiple equilibria, and define a structural mispricing metric.
+
+%% ====================================================================
+\subsection{Foundations and Assumptions}
+\label{subsec:theory_foundations}
+
+We retain the state variables and dynamics of Section~\ref{sec:methodology}: BTC price $S_t$, holdings $H_t$, total liabilities $L_t$, shares outstanding $N_t^{\mathrm{sh}}$, and the log-premium $\pi_t = \log(E_t / \mathrm{NAV}_t^{\mathrm{clip}})$. The key departure is that we no longer take $\pi_t$ as exogenous; instead, we derive it from the value of the firm's strategic optionality.
+
+\begin{assumption}[Management Issuance Policy]
+\label{asm:issuance_policy}
+Management issues equity (via ATM offerings) whenever the market premium exceeds the accretion threshold. Specifically, the rate of equity issuance at time $t$ is
+\begin{equation}
+\label{eq:issuance_rate}
+  \dot{N}_t^{\mathrm{sh}} = \lambda_{\mathrm{ATM}}(\pi_t) \cdot N_t^{\mathrm{sh}},
+\end{equation}
+where $\lambda_{\mathrm{ATM}}: \mathbb{R} \to \mathbb{R}_{\ge 0}$ is a non-negative, non-decreasing function with $\lambda_{\mathrm{ATM}}(\pi) = 0$ for $\pi \le \pi_{\min}$ (a minimum premium below which issuance ceases). In the baseline specification,
+\begin{equation}
+\label{eq:lambda_atm_linear}
+  \lambda_{\mathrm{ATM}}(\pi) = \bar{\lambda} \cdot (\pi - \pi_{\min})^+,
+\end{equation}
+where $\bar{\lambda} > 0$ is the issuance intensity parameter.
+\end{assumption}
+
+\begin{assumption}[BTC Acquisition from Issuance Proceeds]
+\label{asm:btc_acquisition}
+All net proceeds from equity issuance are deployed to purchase BTC. When $\Delta N$ shares are issued at market price $P_t = e^{\pi_t} \mathrm{NAV}_t / N_t^{\mathrm{sh}} + L_t S_t^{-1}$, the resulting BTC acquisition is
+\begin{equation}
+\label{eq:btc_from_issuance}
+  \Delta H = \frac{P_t \cdot \Delta N}{S_t}.
+\end{equation}
+\end{assumption}
+
+\begin{assumption}[BTC Price Independence]
+\label{asm:btc_exogenous}
+The BTC price $S_t$ follows a geometric Brownian motion under $\mathbb{P}$:
+\begin{equation}
+\label{eq:btc_gbm_theory}
+  \frac{dS_t}{S_t} = \mu_S\, dt + \sigma_S\, dW_t^S,
+\end{equation}
+where $\mu_S$ and $\sigma_S$ are constants. The firm's BTC purchases do not affect $S_t$ (the firm is a price-taker in the BTC market). We relax this assumption in Section~\ref{subsec:market_impact}.
+\end{assumption}
+
+\begin{assumption}[Rational Premium Formation]
+\label{asm:rational_premium}
+The market sets the premium $\pi_t$ to reflect the present value of expected future accretive issuance, subject to noise. That is, there exists a fair (fundamental) premium $\pi_t^*$ such that
+\begin{equation}
+\label{eq:premium_decomp}
+  \pi_t = \pi_t^*(\Phi_t) + \varepsilon_t,
+\end{equation}
+where $\Phi_t = (S_t, H_t, L_t, N_t^{\mathrm{sh}}, \sigma_S, \kappa, \bar{\lambda}, \ldots)$ is the observable state vector and $\varepsilon_t$ is a mean-reverting pricing error.
+\end{assumption}
+
+%% ====================================================================
+\subsection{The Accumulation Option}
+\label{subsec:accumulation_option}
+
+The core insight is that a BTC treasury vehicle possesses a \emph{perpetual option} to issue equity at a premium and convert the proceeds into BTC, thereby increasing BTC-per-share for existing holders. This option is valuable whenever the premium exceeds the accretion threshold, and it is perpetual because the firm can exercise it repeatedly and indefinitely.
+
+\begin{definition}[Instantaneous Accretion Rate]
+\label{def:accretion_rate}
+When the firm issues $\Delta N$ shares at premium $\pi_t$ with leverage ratio $\mathrm{ELE}_t = A_t / (A_t - L_t)$, the instantaneous fractional change in BTC per share is
+\begin{equation}
+\label{eq:accretion_rate}
+  \frac{\Delta B_t}{B_t} = \frac{\Delta N}{N_t^{\mathrm{sh}}} \cdot \left(\frac{e^{\pi_t}}{\mathrm{ELE}_t} - 1\right),
+\end{equation}
+where $B_t = H_t / N_t^{\mathrm{sh}}$ is BTC per share.
+\end{definition}
+
+\begin{proof}[Derivation]
+Post-issuance BTC per share is
+\[
+  B_t^{\mathrm{post}} = \frac{H_t + P_t \Delta N / S_t}{N_t^{\mathrm{sh}} + \Delta N}.
+\]
+Using $P_t = E_t / N_t^{\mathrm{sh}} = e^{\pi_t}(A_t - L_t) / N_t^{\mathrm{sh}}$ and $B_t = H_t / N_t^{\mathrm{sh}}$, we compute
+\begin{align*}
+  B_t^{\mathrm{post}} &= \frac{H_t + e^{\pi_t}(A_t - L_t) \Delta N / (S_t N_t^{\mathrm{sh}})}{N_t^{\mathrm{sh}} + \Delta N} \\
+  &= \frac{B_t N_t^{\mathrm{sh}} + (e^{\pi_t} / \mathrm{ELE}_t) \cdot H_t \cdot \Delta N / N_t^{\mathrm{sh}}}{N_t^{\mathrm{sh}} + \Delta N},
+\end{align*}
+where we used $(A_t - L_t) / (S_t) = A_t / (S_t \cdot \mathrm{ELE}_t) = H_t / \mathrm{ELE}_t$. Thus
+\[
+  \frac{B_t^{\mathrm{post}} - B_t}{B_t} = \frac{\Delta N}{N_t^{\mathrm{sh}} + \Delta N} \left(\frac{e^{\pi_t}}{\mathrm{ELE}_t} - 1\right) \approx \frac{\Delta N}{N_t^{\mathrm{sh}}} \left(\frac{e^{\pi_t}}{\mathrm{ELE}_t} - 1\right)
+\]
+for small $\Delta N / N_t^{\mathrm{sh}}$.
+\end{proof}
+
+\begin{remark}
+\label{rem:accretion_threshold}
+Issuance is accretive ($\Delta B_t > 0$) if and only if $\pi_t > \log(\mathrm{ELE}_t)$, recovering the condition of Proposition~\ref{prop:accretion}. When $L_t = 0$, this reduces to $\pi_t > 0$. The quantity $e^{\pi_t} / \mathrm{ELE}_t - 1$ is the \emph{accretion margin}: the fractional BTC-per-share gain per unit of proportional dilution.
+\end{remark}
+
+\begin{definition}[Accumulation Option Value]
+\label{def:accum_option}
+The \emph{accumulation option value} at time $t$ is the present value, under the physical measure $\mathbb{P}$, of all future BTC-per-share accretion generated by the issuance policy:
+\begin{equation}
+\label{eq:V_accretion}
+  V_t^{\mathrm{acc}} = \mathbb{E}_t^{\mathbb{P}} \left[ \int_t^{\infty} e^{-r(u-t)} \cdot B_u S_u \cdot \lambda_{\mathrm{ATM}}(\pi_u) \cdot \left(\frac{e^{\pi_u}}{\mathrm{ELE}_u} - 1\right) du \right],
+\end{equation}
+where $r > 0$ is the discount rate and the integrand represents the dollar value of instantaneous BTC-per-share accretion times the issuance rate.
+\end{definition}
+
+%% ====================================================================
+\subsection{The Fair Premium}
+\label{subsec:fair_premium}
+
+\begin{proposition}[Fair Premium Formula]
+\label{prop:fair_premium}
+Under Assumptions~\ref{asm:issuance_policy}--\ref{asm:rational_premium}, the fair log-premium is
+\begin{equation}
+\label{eq:fair_premium}
+  \pi_t^* = \log\!\left(1 + \frac{V_t^{\mathrm{acc}}}{\mathrm{NAV}_t}\right),
+\end{equation}
+where $V_t^{\mathrm{acc}}$ is the accumulation option value from Definition~\ref{def:accum_option}.
+\end{proposition}
+
+\begin{proof}
+The equity market capitalization should reflect both the current NAV and the value of future accretive issuance:
+\[
+  E_t = \mathrm{NAV}_t + V_t^{\mathrm{acc}}.
+\]
+By definition, $\pi_t = \log(E_t / \mathrm{NAV}_t)$, so
+\[
+  \pi_t^* = \log\!\left(\frac{\mathrm{NAV}_t + V_t^{\mathrm{acc}}}{\mathrm{NAV}_t}\right) = \log\!\left(1 + \frac{V_t^{\mathrm{acc}}}{\mathrm{NAV}_t}\right). \qedhere
+\]
+\end{proof}
+
+The fair premium formula~\eqref{eq:fair_premium} makes the premium \emph{endogenous}: it depends on the state through $V_t^{\mathrm{acc}}$ and $\mathrm{NAV}_t$, both of which evolve with the joint dynamics of BTC price, holdings, and the premium itself.
+
+To obtain a more explicit characterization, we derive a closed-form approximation under simplifying conditions.
+
+\begin{proposition}[Approximate Fair Premium --- Steady-State]
+\label{prop:fair_premium_approx}
+Suppose the premium fluctuates around a steady state $\bar{\pi}$, the leverage ratio is approximately constant at $\ell = \mathrm{ELE}$, and the issuance intensity is linear per~\eqref{eq:lambda_atm_linear} with $\pi_{\min} = \log \ell$. Then the fair premium satisfies the fixed-point equation
+\begin{equation}
+\label{eq:fair_premium_fp}
+  \bar{\pi} = \log\!\left(1 + \frac{\bar{\lambda}\, (\bar{\pi} - \log \ell)^+\, (e^{\bar{\pi}} / \ell - 1)}{r + \kappa - \mu_S}\right),
+\end{equation}
+where $\kappa$ is the mean-reversion speed of the premium, $\mu_S$ is the BTC drift, and $r$ is the discount rate, provided $r + \kappa > \mu_S$.
+\end{proposition}
+
+\begin{proof}[Proof sketch]
+In steady state, the integrand of~\eqref{eq:V_accretion} grows at rate $\mu_S$ (from BTC price appreciation) and decays at rate $\kappa$ (from premium mean-reversion toward $\bar{\pi}$). The present value of a perpetuity growing at $\mu_S$ and decaying at $\kappa$, discounted at $r$, has effective discount rate $r + \kappa - \mu_S$. Substituting the steady-state issuance rate $\bar{\lambda}(\bar{\pi} - \log\ell)^+$ and accretion margin $(e^{\bar{\pi}}/\ell - 1)$, and normalizing by NAV, yields~\eqref{eq:fair_premium_fp}.
+\end{proof}
+
+\begin{corollary}[Comparative Statics of the Fair Premium]
+\label{cor:comparative_statics}
+Let $\bar{\pi}^* > \log\ell$ denote an interior solution of~\eqref{eq:fair_premium_fp}. Then:
+\begin{enumerate}
+  \item \textbf{BTC volatility:} $\partial \bar{\pi}^* / \partial \sigma_S > 0$. Higher BTC volatility increases the option value of future issuance opportunities (the premium fluctuates more, creating more episodes of high accretion margin), raising the fair premium.
+  \item \textbf{Issuance intensity:} $\partial \bar{\pi}^* / \partial \bar{\lambda} > 0$. A more aggressive issuance policy extracts more value from the accumulation option, justifying a higher premium.
+  \item \textbf{Leverage:} The effect of leverage $\ell$ is non-monotone. For moderate $\ell$, increasing leverage raises the accretion threshold $\log\ell$ but also amplifies BTC returns, with the net effect depending on the premium level.
+  \item \textbf{Mean-reversion speed:} $\partial \bar{\pi}^* / \partial \kappa < 0$. Faster premium mean-reversion shortens the window for accretive issuance, reducing option value.
+  \item \textbf{BTC drift:} $\partial \bar{\pi}^* / \partial \mu_S > 0$. Higher expected BTC appreciation increases future NAV, making future issuance more valuable in dollar terms.
+\end{enumerate}
+\end{corollary}
+
+\begin{proof}
+Items 1 and 4--5 follow from the effective discount rate $r + \kappa - \mu_S$ in~\eqref{eq:fair_premium_fp}: higher $\mu_S$ lowers the discount rate and raises the perpetuity value; higher $\kappa$ raises the discount rate and lowers it. For item~1, BTC volatility enters through the expected accretion margin: $\mathbb{E}[(e^{\pi}/\ell - 1)^+]$ is convex in $\pi$, so higher volatility of $\pi$ (driven by $\sigma_S$ through the correlation $\rho$) raises its expectation by Jensen's inequality. Item~2 follows directly from~\eqref{eq:fair_premium_fp}: the numerator is linear in $\bar{\lambda}$. For item~3, differentiate the right-hand side with respect to $\ell$ and note the competing effects on the accretion margin $(e^{\bar{\pi}}/\ell - 1)$ (decreasing in $\ell$) and on NAV growth dynamics (amplified by $\ell$).
+\end{proof}
+
+\begin{remark}[Economic Interpretation]
+\label{rem:premium_as_option}
+The fair premium formula reveals the BTC treasury vehicle as fundamentally an \emph{options-like structure}. Just as a call option's value increases with underlying volatility, the accumulation option's value --- and hence the fair premium --- increases with BTC volatility. This provides a structural explanation for the empirically observed positive relationship between BTC volatility and MSTR's premium to NAV: it is not irrational exuberance but the rational pricing of enhanced optionality.
+\end{remark}
+
+%% ====================================================================
+\subsection{The Endogenous Premium System}
+\label{subsec:endogenous_system}
+
+We now replace the exogenous OU dynamics with a coupled system that makes the premium endogenous. The key innovation is that the premium mean-reverts not toward a fixed long-run mean $\theta$ but toward the time-varying fair premium $\pi_t^*(\Phi_t)$.
+
+\begin{definition}[Endogenous Premium Dynamics]
+\label{def:endogenous_dynamics}
+The \emph{endogenous premium system} consists of the coupled SDEs:
+\begin{align}
+  \frac{dS_t}{S_t} &= \mu_S\, dt + \sigma_S\, dW_t^S, \label{eq:endo_S} \\[6pt]
+  d\pi_t &= \kappa\bigl(\pi_t^*(\Phi_t) - \pi_t\bigr)\, dt + \sigma_\pi\, dW_t^\pi, \label{eq:endo_pi} \\[6pt]
+  dH_t &= \frac{e^{\pi_t}(A_t - L_t)}{S_t \cdot N_t^{\mathrm{sh}}} \cdot \lambda_{\mathrm{ATM}}(\pi_t) \cdot N_t^{\mathrm{sh}}\, dt + dH_t^{\mathrm{jump}}, \label{eq:endo_H} \\[6pt]
+  dN_t^{\mathrm{sh}} &= \lambda_{\mathrm{ATM}}(\pi_t) \cdot N_t^{\mathrm{sh}}\, dt + dN_t^{\mathrm{conv}}, \label{eq:endo_N}
+\end{align}
+where $\mathrm{corr}(dW_t^S, dW_t^\pi) = \rho$, and
+\begin{equation}
+\label{eq:pi_star_functional}
+  \pi_t^* = \log\!\left(1 + \frac{V_t^{\mathrm{acc}}(\Phi_t)}{\mathrm{NAV}_t}\right)
+\end{equation}
+is the fair premium from Proposition~\ref{prop:fair_premium}, evaluated at the current state $\Phi_t$.
+\end{definition}
+
+\begin{remark}[Comparison with the Base Model]
+\label{rem:comparison}
+Equation~\eqref{eq:endo_pi} nests the base-model OU process as a special case: when $\pi_t^*$ is constant (independent of state), we recover the exogenous OU with $\theta = \pi_t^*$. The endogenous system differs in three respects:
+\begin{enumerate}
+  \item The mean-reversion target $\pi_t^*$ moves with the state, creating a \emph{moving attractor}.
+  \item The holding dynamics~\eqref{eq:endo_H} and share dynamics~\eqref{eq:endo_N} feed back into $\pi_t^*$ through NAV and the accretion opportunity set.
+  \item The premium dynamics are \emph{reflexive}: $\pi_t$ influences issuance, which changes $H_t$ and $N_t^{\mathrm{sh}}$, which alters $\mathrm{NAV}_t$ and $V_t^{\mathrm{acc}}$, which shifts $\pi_t^*$, which in turn affects $\pi_t$.
+\end{enumerate}
+\end{remark}
+
+%% ====================================================================
+\subsection{Reflexivity and the Feedback Loop}
+\label{subsec:reflexivity}
+
+The endogenous premium system exhibits a \emph{positive feedback loop} that is central to understanding BTC treasury vehicles. We formalize this as follows.
+
+\begin{definition}[Reflexivity Operator]
+\label{def:reflexivity}
+Define the \emph{reflexivity operator} $\mathcal{R}: \mathbb{R} \to \mathbb{R}$ as the map from the current premium to its effect on the fair premium through the issuance channel:
+\begin{equation}
+\label{eq:reflexivity_operator}
+  \mathcal{R}(\pi) = \pi^*\bigl(\Phi(\pi)\bigr),
+\end{equation}
+where $\Phi(\pi)$ denotes the state resulting from the issuance policy evaluated at premium $\pi$. An equilibrium premium $\bar{\pi}$ satisfies $\mathcal{R}(\bar{\pi}) = \bar{\pi}$.
+\end{definition}
+
+\begin{proposition}[Positive Feedback]
+\label{prop:positive_feedback}
+For $\pi > \log(\mathrm{ELE}_t)$ (the accretive region), the reflexivity operator satisfies $\mathcal{R}'(\pi) > 0$: a higher premium increases the fair premium. The feedback gain is
+\begin{equation}
+\label{eq:feedback_gain}
+  \mathcal{R}'(\pi) = \frac{\partial \pi^*}{\partial \bar{\lambda}_{\mathrm{eff}}} \cdot \frac{\partial \bar{\lambda}_{\mathrm{eff}}}{\partial \pi} + \frac{\partial \pi^*}{\partial \mathrm{NAV}} \cdot \frac{\partial \mathrm{NAV}}{\partial H} \cdot \frac{\partial H}{\partial \pi},
+\end{equation}
+where $\bar{\lambda}_{\mathrm{eff}} = \lambda_{\mathrm{ATM}}(\pi)$ is the effective issuance rate. Each term is positive in the accretive region:
+\begin{itemize}
+  \item Higher $\pi \Rightarrow$ faster issuance $\Rightarrow$ more BTC acquired $\Rightarrow$ higher future accretion capacity $\Rightarrow$ higher $\pi^*$.
+  \item Higher $\pi \Rightarrow$ more BTC acquired $\Rightarrow$ higher NAV $\Rightarrow$ but the effect on $\pi^* = \log(1 + V^{\mathrm{acc}}/\mathrm{NAV})$ depends on whether $V^{\mathrm{acc}}$ grows faster than NAV.
+\end{itemize}
+\end{proposition}
+
+\begin{proof}
+The issuance rate $\lambda_{\mathrm{ATM}}(\pi) = \bar{\lambda}(\pi - \pi_{\min})^+$ is increasing in $\pi$ for $\pi > \pi_{\min}$, so $\partial \bar{\lambda}_{\mathrm{eff}} / \partial \pi = \bar{\lambda} > 0$. From~\eqref{eq:fair_premium_fp}, $\pi^*$ is increasing in $\bar{\lambda}_{\mathrm{eff}}$ (the numerator of the fraction inside the logarithm increases). For the second channel, higher issuance at $\pi > \log\ell$ is accretive ($\Delta B > 0$), so $H$ increases relative to the diluted share count, raising per-share metrics. The net effect on $\pi^*$ is positive whenever $V^{\mathrm{acc}} / \mathrm{NAV}$ is increasing in $H$, which holds when the marginal accretion from additional BTC (through its effect on future issuance proceeds in dollar terms) exceeds the marginal increase in NAV.
+\end{proof}
+
+\begin{theorem}[Reflexive Amplification]
+\label{thm:amplification}
+Let $\mathcal{G} = \mathcal{R}'(\bar{\pi})$ denote the feedback gain evaluated at an equilibrium $\bar{\pi}$. Then:
+\begin{enumerate}
+  \item If $\mathcal{G} < 1$ (subcritical feedback), the equilibrium is \emph{stable}: perturbations in $\pi_t$ away from $\bar{\pi}$ are dampened by the mean-reversion in~\eqref{eq:endo_pi}, with effective mean-reversion speed
+  \begin{equation}
+  \label{eq:effective_kappa}
+    \kappa_{\mathrm{eff}} = \kappa(1 - \mathcal{G}).
+  \end{equation}
+  \item If $\mathcal{G} > 1$ (supercritical feedback), the equilibrium is \emph{unstable}: perturbations are amplified, driving the system toward a different equilibrium.
+  \item If $\mathcal{G} = 1$ (critical feedback), the system is at a \emph{bifurcation point} where the equilibrium structure changes.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+Consider a small perturbation $\delta\pi_t = \pi_t - \bar{\pi}$. From~\eqref{eq:endo_pi},
+\[
+  d(\delta\pi_t) = \kappa\bigl(\pi_t^*(\Phi_t) - \pi_t\bigr)\, dt + \sigma_\pi\, dW_t^\pi.
+\]
+Linearizing $\pi_t^*(\Phi_t)$ around $\bar{\pi}$:
+\[
+  \pi_t^* \approx \bar{\pi} + \mathcal{G} \cdot \delta\pi_t,
+\]
+so
+\[
+  d(\delta\pi_t) \approx \kappa(\mathcal{G} - 1)\, \delta\pi_t\, dt + \sigma_\pi\, dW_t^\pi = -\kappa_{\mathrm{eff}}\, \delta\pi_t\, dt + \sigma_\pi\, dW_t^\pi,
+\]
+where $\kappa_{\mathrm{eff}} = \kappa(1 - \mathcal{G})$. This is an OU process with mean-reversion speed $\kappa_{\mathrm{eff}}$. When $\mathcal{G} < 1$, $\kappa_{\mathrm{eff}} > 0$ and perturbations decay. When $\mathcal{G} > 1$, $\kappa_{\mathrm{eff}} < 0$ and perturbations grow exponentially in expectation. The critical case $\mathcal{G} = 1$ yields $\kappa_{\mathrm{eff}} = 0$, a Brownian motion without drift (in the linearized approximation), indicating a structural change in system behavior.
+\end{proof}
+
+\begin{remark}[Volatility Amplification]
+\label{rem:vol_amplification}
+At a stable equilibrium with feedback gain $\mathcal{G} \in (0,1)$, the stationary variance of the premium is
+\begin{equation}
+\label{eq:amplified_variance}
+  \mathrm{Var}(\pi_t) = \frac{\sigma_\pi^2}{2\kappa_{\mathrm{eff}}} = \frac{\sigma_\pi^2}{2\kappa(1 - \mathcal{G})}.
+\end{equation}
+This exceeds the exogenous-model variance $\sigma_\pi^2 / (2\kappa)$ by a factor of $1/(1-\mathcal{G})$. The reflexive feedback amplifies premium volatility even at a stable equilibrium, consistent with the empirically observed high volatility of MSTR's premium.
+\end{remark}
+
+%% ====================================================================
+\subsection{Multiple Equilibria and Phase Transitions}
+\label{subsec:multiple_equilibria}
+
+The nonlinearity of the reflexivity operator $\mathcal{R}$ admits the possibility of multiple fixed points, corresponding to distinct equilibrium premium levels. This subsection characterizes the equilibrium structure.
+
+\begin{theorem}[Existence of Multiple Equilibria]
+\label{thm:multiple_equilibria}
+Under the endogenous premium system (Definition~\ref{def:endogenous_dynamics}), there exist parameter configurations $(\bar{\lambda}, \sigma_S, \ell, \kappa, r)$ for which the fixed-point equation $\mathcal{R}(\bar{\pi}) = \bar{\pi}$ admits at least three solutions:
+\begin{enumerate}
+  \item A \textbf{high-premium equilibrium} $\bar{\pi}_H > \log\ell$, which is stable ($\mathcal{G}_H < 1$).
+  \item An \textbf{unstable intermediate equilibrium} $\bar{\pi}_U$ with $\mathcal{G}_U > 1$.
+  \item A \textbf{low-premium (or discount) equilibrium} $\bar{\pi}_L \le 0$, which is stable.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+We establish the result by analyzing the shape of $\mathcal{R}(\pi) - \pi$.
+
+\emph{Step 1: Behavior at extremes.} For $\pi \to -\infty$, issuance ceases ($\lambda_{\mathrm{ATM}} = 0$), so $V^{\mathrm{acc}} \to 0$ and $\pi^* \to 0$. Hence $\mathcal{R}(\pi) - \pi \to 0 - (-\infty) = +\infty$. For $\pi \to +\infty$, the accretion margin grows as $e^{\pi}/\ell$, but NAV also grows via BTC accumulation. The ratio $V^{\mathrm{acc}}/\mathrm{NAV}$ remains bounded because the discount rate $r + \kappa - \mu_S > 0$ ensures the present value converges, while the logarithm in~\eqref{eq:fair_premium} grows only logarithmically. Thus $\pi^* = O(\log \pi)$, and $\mathcal{R}(\pi) - \pi \to -\infty$.
+
+\emph{Step 2: Positive feedback region.} For $\pi$ slightly above $\log\ell$ (the accretion threshold), the accumulation option begins to have positive value, and $\mathcal{R}'(\pi)$ may exceed 1 when $\bar{\lambda}$ is sufficiently large and $r + \kappa - \mu_S$ is sufficiently small. In this region, $\mathcal{R}(\pi) - \pi$ is locally increasing.
+
+\emph{Step 3: Intersection count.} Since $\mathcal{R}(\pi) - \pi$ goes from $+\infty$ to $-\infty$ and has a local maximum in the interior, the intermediate value theorem guarantees at least one crossing below the local maximum (yielding $\bar{\pi}_L$), one at the local maximum's ascending phase (yielding $\bar{\pi}_U$), and one beyond (yielding $\bar{\pi}_H$), provided the local maximum exceeds zero. The condition for this is
+\begin{equation}
+\label{eq:multi_equil_condition}
+  \frac{\bar{\lambda}\, (e^{\pi^{\dagger}}/\ell - 1)}{r + \kappa - \mu_S} > e^{\pi^{\dagger}} - 1,
+\end{equation}
+where $\pi^{\dagger}$ is the premium at which $\mathcal{R}(\pi) - \pi$ achieves its interior maximum. When this inequality holds, three equilibria exist. The stability classification follows from Theorem~\ref{thm:amplification}: at $\bar{\pi}_L$ and $\bar{\pi}_H$, the function $\mathcal{R}(\pi) - \pi$ crosses zero from above, so $\mathcal{R}'(\bar{\pi}) < 1$ (stable). At $\bar{\pi}_U$, it crosses from below, so $\mathcal{R}'(\bar{\pi}_U) > 1$ (unstable).
+\end{proof}
+
+The three equilibria correspond to qualitatively different regimes of the BTC treasury vehicle:
+
+\begin{definition}[Equilibrium Regimes]
+\label{def:regimes}
+\begin{enumerate}
+  \item \textbf{Flywheel regime} ($\bar{\pi}_H$): The premium is high, enabling rapid accretive issuance. BTC per share grows, validating the premium. The system is self-reinforcing and stable.
+  \item \textbf{Discount regime} ($\bar{\pi}_L$): The premium is low or negative, issuance is not accretive or not feasible, the accumulation option has negligible value, and the vehicle trades near or below NAV like a closed-end fund. This equilibrium is also stable.
+  \item \textbf{Tipping point} ($\bar{\pi}_U$): The unstable equilibrium separating the basins of attraction of the two stable equilibria. The premium is positive but insufficient to sustain the flywheel at full speed.
+\end{enumerate}
+\end{definition}
+
+\begin{proposition}[Critical Premium --- The Tipping Point]
+\label{prop:tipping_point}
+The tipping-point premium $\bar{\pi}_U$ satisfies the system
+\begin{equation}
+\label{eq:tipping_system}
+  \begin{cases}
+    \mathcal{R}(\bar{\pi}_U) = \bar{\pi}_U, \\
+    \mathcal{R}'(\bar{\pi}_U) \ge 1.
+  \end{cases}
+\end{equation}
+Under the linear issuance policy~\eqref{eq:lambda_atm_linear}, $\bar{\pi}_U$ is the solution of
+\begin{equation}
+\label{eq:tipping_implicit}
+  \bar{\pi}_U = \log\!\left(1 + \frac{\bar{\lambda}\,(\bar{\pi}_U - \log\ell)^+ \,(e^{\bar{\pi}_U}/\ell - 1)}{r + \kappa - \mu_S}\right)
+\end{equation}
+at which the derivative of the right-hand side with respect to $\bar{\pi}_U$ equals 1.
+\end{proposition}
+
+\begin{proof}
+Follows directly from Definition~\ref{def:reflexivity} and Theorem~\ref{thm:amplification}: the tipping point is the fixed point at which the linearized system transitions from stable to unstable.
+\end{proof}
+
+\begin{corollary}[Catastrophe Structure]
+\label{cor:catastrophe}
+As parameters vary (e.g., $\bar{\lambda}$ decreases or $r + \kappa$ increases), the high-premium equilibrium $\bar{\pi}_H$ and the tipping point $\bar{\pi}_U$ approach each other and annihilate in a \emph{saddle-node bifurcation}. Beyond this critical parameter value, only the discount equilibrium $\bar{\pi}_L$ survives.
+
+Conversely, as the issuance intensity $\bar{\lambda}$ increases from zero, the bifurcation creates the high-premium equilibrium discontinuously --- a first-order phase transition. This implies \emph{hysteresis}: once the system falls to the discount regime, returning to the flywheel regime requires a larger parameter shift than what caused the transition.
+\end{corollary}
+
+\begin{proof}[Proof sketch]
+This is a standard feature of scalar systems with S-shaped equilibrium manifolds. As $\bar{\lambda}$ decreases, the local maximum of $\mathcal{R}(\pi) - \pi$ shrinks. When it reaches zero, $\bar{\pi}_H$ and $\bar{\pi}_U$ merge (saddle-node bifurcation). The hysteresis follows because the basin of attraction of $\bar{\pi}_L$ extends upward past the former location of $\bar{\pi}_U$ once the high equilibrium disappears; restoring $\bar{\lambda}$ must now push the system past this enlarged basin.
+\end{proof}
+
+%% ====================================================================
+\subsection{The Death Spiral}
+\label{subsec:death_spiral}
+
+When the premium falls below the tipping point, the system can enter a self-reinforcing downward spiral. We formalize this mechanism.
+
+\begin{definition}[Death Spiral Dynamics]
+\label{def:death_spiral}
+The \emph{death spiral} is the trajectory from the neighborhood of $\bar{\pi}_U$ to $\bar{\pi}_L$ (or below), characterized by the following causal chain:
+\begin{equation}
+\label{eq:spiral_chain}
+  \pi_t \downarrow\; \xrightarrow{\text{(i)}}\; \lambda_{\mathrm{ATM}} \downarrow\; \xrightarrow{\text{(ii)}}\; \dot{H}_t \downarrow\; \xrightarrow{\text{(iii)}}\; \dot{B}_t \downarrow\; \xrightarrow{\text{(iv)}}\; V^{\mathrm{acc}} \downarrow\; \xrightarrow{\text{(v)}}\; \pi_t^* \downarrow\; \xrightarrow{\text{(vi)}}\; \pi_t \downarrow.
+\end{equation}
+If the firm has convertible debt outstanding, an additional channel amplifies the spiral:
+\begin{equation}
+\label{eq:conv_spiral}
+  P_t \downarrow\; \Rightarrow\; \text{conversion unlikely}\; \Rightarrow\; D_c \text{ remains as debt}\; \Rightarrow\; \mathrm{ELE} \uparrow\; \Rightarrow\; \pi_{\min} = \log(\mathrm{ELE}) \uparrow\; \Rightarrow\; \text{accretion harder}.
+\end{equation}
+\end{definition}
+
+\begin{proposition}[Death Spiral Speed]
+\label{prop:spiral_speed}
+In the death spiral regime ($\pi_t$ between $\bar{\pi}_U$ and $\bar{\pi}_L$), the expected rate of premium decline is
+\begin{equation}
+\label{eq:spiral_speed}
+  \mathbb{E}\!\left[\frac{d\pi_t}{dt}\right] = \kappa\bigl(\pi_t^*(\Phi_t) - \pi_t\bigr),
+\end{equation}
+where $\pi_t^* < \pi_t$ because the fair premium has collapsed below the current (still-elevated) market premium. The speed of the spiral increases with:
+\begin{enumerate}
+  \item The mean-reversion speed $\kappa$ (faster adjustment to the new reality).
+  \item The gap $\pi_t - \pi_t^*$ (larger mispricing relative to the collapsed fair value).
+  \item The feedback gain $\mathcal{G}$, which accelerates the decline of $\pi_t^*$ as $\pi_t$ falls.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+Taking expectations of~\eqref{eq:endo_pi} conditional on $\mathcal{F}_t$ yields~\eqref{eq:spiral_speed} directly. As $\pi_t$ falls, $\pi_t^*$ falls faster (since $\mathcal{G} > 1$ in the unstable region), widening the gap. The result is a self-accelerating decline until $\pi_t$ enters the basin of attraction of $\bar{\pi}_L$ where the feedback weakens ($\mathcal{G} < 1$) and the system stabilizes.
+\end{proof}
+
+\begin{remark}[Convertible Debt as Spiral Amplifier]
+\label{rem:convertible_amplifier}
+When the firm carries convertible debt $D_c > 0$ that is out of the money (share price below conversion strike), the debt remains on the balance sheet, maintaining high leverage. If the convertibles eventually mature without conversion, the firm must repay principal --- potentially forcing BTC sales (reducing $H_t$) or further dilutive issuance at distressed premiums, deepening the spiral. Proposition~\ref{prop:distress} in Section~\ref{sec:model_extended} quantifies the extended distress boundary incorporating these claims.
+\end{remark}
+
+%% ====================================================================
+\subsection{Market Impact Extension}
+\label{subsec:market_impact}
+
+We briefly relax Assumption~\ref{asm:btc_exogenous} to consider the effect of the firm's BTC purchases on the BTC price itself. This is relevant given Strategy's scale of accumulation.
+
+\begin{assumption}[Market Impact]
+\label{asm:market_impact}
+The firm's BTC purchases exert a transient price impact:
+\begin{equation}
+\label{eq:btc_with_impact}
+  \frac{dS_t}{S_t} = \mu_S\, dt + \sigma_S\, dW_t^S + \eta \cdot dH_t / \bar{H},
+\end{equation}
+where $\eta \ge 0$ is the price impact coefficient and $\bar{H}$ is a normalizing constant (e.g., average daily BTC trading volume).
+\end{assumption}
+
+\begin{proposition}[Market Impact Reinforces the Flywheel]
+\label{prop:market_impact}
+Under Assumption~\ref{asm:market_impact}, the reflexive feedback is strengthened: the feedback gain becomes
+\begin{equation}
+\label{eq:gain_with_impact}
+  \mathcal{G}^{\mathrm{MI}} = \mathcal{G} + \underbrace{\frac{\partial \pi^*}{\partial S} \cdot \frac{\partial S}{\partial H} \cdot \frac{\partial H}{\partial \pi}}_{\text{market impact channel}} > \mathcal{G},
+\end{equation}
+where the additional term is positive because higher $\pi \Rightarrow$ more BTC purchased $\Rightarrow$ higher $S$ (via price impact) $\Rightarrow$ higher NAV $\Rightarrow$ higher $\pi^*$.
+
+This implies:
+\begin{enumerate}
+  \item The high-premium equilibrium $\bar{\pi}_H^{\mathrm{MI}} > \bar{\pi}_H$ is \emph{higher} than without market impact.
+  \item The tipping point $\bar{\pi}_U^{\mathrm{MI}} < \bar{\pi}_U$ is \emph{lower}, expanding the flywheel's basin of attraction.
+  \item The death spiral is more severe because the cessation of BTC purchases removes the price support channel.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+The market impact term $\eta\, dH_t / \bar{H}$ adds a positive contribution to $dS_t / S_t$ whenever $dH_t > 0$. Since issuance increases $H_t$, and a higher $S_t$ raises NAV and $V^{\mathrm{acc}}$, each link in the chain is positive, establishing $\mathcal{G}^{\mathrm{MI}} > \mathcal{G}$. The equilibrium shifts follow from the comparative statics: a higher feedback gain pushes $\bar{\pi}_H$ upward and $\bar{\pi}_U$ downward (the S-curve of $\mathcal{R}(\pi) - \pi$ shifts upward). When issuance ceases ($\pi < \pi_{\min}$), the market impact channel shuts off entirely, removing the price support, which causes a discrete drop in $\pi^*$ and accelerates the spiral.
+\end{proof}
+
+%% ====================================================================
+\subsection{The Mispricing Metric}
+\label{subsec:mispricing}
+
+With the fair premium $\pi_t^*$ in hand, we define a structural mispricing metric.
+
+\begin{definition}[Structural Mispricing]
+\label{def:mispricing}
+The \emph{structural mispricing} at time $t$ is
+\begin{equation}
+\label{eq:mispricing}
+  \Delta_t = \pi_t - \pi_t^*(\Phi_t).
+\end{equation}
+Positive $\Delta_t$ indicates the market premium exceeds the fundamental value of the accumulation option (\emph{overvaluation}); negative $\Delta_t$ indicates it falls short (\emph{undervaluation}).
+\end{definition}
+
+\begin{proposition}[Mispricing Dynamics]
+\label{prop:mispricing_dynamics}
+The mispricing $\Delta_t$ follows an Ornstein--Uhlenbeck process with enhanced mean-reversion:
+\begin{equation}
+\label{eq:mispricing_ou}
+  d\Delta_t = -\kappa_\Delta\, \Delta_t\, dt + \tilde{\sigma}\, d\tilde{W}_t,
+\end{equation}
+where
+\begin{equation}
+\label{eq:kappa_delta}
+  \kappa_\Delta = \kappa + \frac{\partial \pi_t^*}{\partial t}\bigg|_{\text{state-driven}} \approx \kappa\,(1 + \mathcal{G}')
+\end{equation}
+satisfies $\kappa_\Delta > \kappa$ (the mispricing mean-reverts faster than the raw premium), with $\mathcal{G}'$ capturing the sensitivity of $\pi_t^*$ to changes that also affect $\pi_t$.
+
+The noise term $\tilde{\sigma}\, d\tilde{W}_t$ aggregates the diffusive innovations in $\pi_t$ and $\pi_t^*$, with
+\begin{equation}
+\label{eq:tilde_sigma}
+  \tilde{\sigma}^2 = \sigma_\pi^2 + \left(\frac{\partial \pi_t^*}{\partial S_t}\right)^2 \sigma_S^2 S_t^2 - 2\rho\, \sigma_\pi \cdot \frac{\partial \pi_t^*}{\partial S_t}\, \sigma_S S_t.
+\end{equation}
+\end{proposition}
+
+\begin{proof}
+By It\^{o}'s lemma applied to $\Delta_t = \pi_t - \pi_t^*$:
+\[
+  d\Delta_t = d\pi_t - d\pi_t^*.
+\]
+From~\eqref{eq:endo_pi}, $d\pi_t = \kappa(\pi_t^* - \pi_t)\,dt + \sigma_\pi\, dW_t^\pi = -\kappa\, \Delta_t\, dt + \sigma_\pi\, dW_t^\pi$.
+
+For $d\pi_t^*$, apply It\^{o}'s lemma to $\pi_t^* = f(\Phi_t)$:
+\[
+  d\pi_t^* = \frac{\partial \pi^*}{\partial S} dS_t + \frac{\partial \pi^*}{\partial H} dH_t + \frac{\partial \pi^*}{\partial N} dN_t^{\mathrm{sh}} + \text{(drift and second-order terms)}.
+\]
+The leading contribution is through $S_t$: $d\pi_t^* \approx (\partial \pi^* / \partial S)\, \sigma_S S_t\, dW_t^S + (\text{drift terms})$. The drift terms include the response of $\pi^*$ to $\Delta_t$ itself (through the issuance channel), contributing an additional mean-reversion of order $\kappa \mathcal{G}' \Delta_t$. Combining:
+\[
+  d\Delta_t = -(\kappa + \kappa \mathcal{G}')\Delta_t\, dt + \sigma_\pi\, dW_t^\pi - \frac{\partial \pi^*}{\partial S}\, \sigma_S S_t\, dW_t^S,
+\]
+which has the form~\eqref{eq:mispricing_ou} with $\kappa_\Delta = \kappa(1 + \mathcal{G}')$ and $\tilde{\sigma}$ as in~\eqref{eq:tilde_sigma}.
+\end{proof}
+
+\begin{corollary}[Half-Life of Mispricing]
+\label{cor:half_life}
+The half-life of the mispricing is
+\begin{equation}
+\label{eq:half_life}
+  t_{1/2}^{\Delta} = \frac{\ln 2}{\kappa_\Delta} < \frac{\ln 2}{\kappa} = t_{1/2}^{\pi},
+\end{equation}
+i.e., mispricing reverts faster than the raw premium. In the base-model calibration with $\kappa \approx 4.6$ (half-life $\approx 55$ days for the premium), a feedback gain $\mathcal{G}' \approx 0.5$ implies a mispricing half-life of $\approx 37$ days --- consistent with the observation that extreme MSTR premium deviations tend to correct within one to two months.
+\end{corollary}
+
+\begin{definition}[Mispricing Bands]
+\label{def:mispricing_bands}
+Define the \emph{mispricing z-score}:
+\begin{equation}
+\label{eq:mispricing_zscore}
+  z_t^{\Delta} = \frac{\Delta_t}{\tilde{\sigma} / \sqrt{2\kappa_\Delta}}.
+\end{equation}
+Under the OU approximation~\eqref{eq:mispricing_ou}, $z_t^{\Delta}$ is asymptotically standard normal. We define:
+\begin{itemize}
+  \item \textbf{Fair band}: $|z_t^{\Delta}| < 1$ (mispricing within one standard deviation).
+  \item \textbf{Moderate mispricing}: $1 \le |z_t^{\Delta}| < 2$.
+  \item \textbf{Extreme mispricing}: $|z_t^{\Delta}| \ge 2$ (signal for mean-reversion trading).
+\end{itemize}
+This refines the PMRI of Section~\ref{sec:methodology} by decomposing the premium deviation into a fundamental component (captured by $\pi_t^*$) and a mispricing component ($\Delta_t$).
+\end{definition}
+
+%% ====================================================================
+\subsection{Conditions for Premium Justification}
+\label{subsec:premium_sign}
+
+A central question for investors is whether any premium at all is justified. We characterize this precisely.
+
+\begin{theorem}[Premium Sign Conditions]
+\label{thm:premium_sign}
+The fair premium $\pi_t^*$ is strictly positive if and only if the accumulation option has positive value, which requires:
+\begin{equation}
+\label{eq:positive_premium_condition}
+  \mathbb{E}_t^{\mathbb{P}}\!\left[\int_t^{\infty} e^{-r(u-t)}\, \lambda_{\mathrm{ATM}}(\pi_u)\, \left(\frac{e^{\pi_u}}{\mathrm{ELE}_u} - 1\right)^+ du\right] > 0.
+\end{equation}
+Sufficient conditions for $\pi_t^* > 0$ include:
+\begin{enumerate}
+  \item \textbf{Positive expected accretion}: $\mathbb{E}_t[\pi_u] > \log(\mathrm{ELE}_u)$ for a positive-measure set of future times $u > t$.
+  \item \textbf{Volatility channel}: Even if $\mathbb{E}_t[\pi_u] \le \log(\mathrm{ELE}_u)$, positive volatility of $\pi_u$ ensures $\mathbb{E}[(e^{\pi_u}/\mathrm{ELE}_u - 1)^+] > 0$ by Jensen's inequality applied to the convex payoff.
+\end{enumerate}
+Conversely, $\pi_t^* \le 0$ (discount justified) when:
+\begin{enumerate}
+  \item The issuance policy is inactive ($\bar{\lambda} = 0$ or regulatory constraints prevent issuance).
+  \item Leverage is so high that the accretion threshold $\log(\mathrm{ELE}_t)$ exceeds any plausible premium level.
+  \item Ongoing liabilities (preferred dividends, debt service) erode NAV faster than BTC appreciation can sustain, making $\mathrm{IBGR}^{\mathrm{DA}} < 0$.
+\end{enumerate}
+\end{theorem}
+
+\begin{proof}
+The fair premium $\pi_t^* = \log(1 + V_t^{\mathrm{acc}} / \mathrm{NAV}_t)$ is positive iff $V_t^{\mathrm{acc}} > 0$, which by Definition~\ref{def:accum_option} requires the integrand to be positive on a set of positive measure. Condition~1 ensures $\lambda_{\mathrm{ATM}}(\pi_u) > 0$ and $(e^{\pi_u}/\mathrm{ELE}_u - 1) > 0$ with positive probability. Condition~2 exploits the option-like convexity: define $g(\pi) = \lambda_{\mathrm{ATM}}(\pi)(e^{\pi}/\ell - 1)^+$, which is convex for $\pi > \log\ell$. By Jensen's inequality, $\mathbb{E}[g(\pi_u)] \ge g(\mathbb{E}[\pi_u])$ when $g$ is convex, and $\mathbb{E}[g(\pi_u)] > 0$ as long as $\mathbb{P}(\pi_u > \log\ell) > 0$, which holds whenever the premium has positive variance. The discount conditions follow by negation: if no issuance can occur or if all issuance is dilutive, then $V_t^{\mathrm{acc}} \le 0$.
+\end{proof}
+
+\begin{remark}[The Volatility Paradox]
+\label{rem:volatility_paradox}
+Theorem~\ref{thm:premium_sign} implies a striking result: a BTC treasury vehicle can rationally trade at a premium even when its \emph{expected} premium is below the accretion threshold, purely because BTC volatility creates \emph{option value} from future issuance opportunities. This is the structural analogue of the ``volatility smile'' --- higher BTC volatility unambiguously increases the fair premium because the accumulation option has a convex payoff. The implication for investors is that shorting the premium during periods of high BTC volatility is structurally risky, as the fundamental fair premium is itself elevated.
+\end{remark}
+
+%% ====================================================================
+\subsection{Connection to the Base Model}
+\label{subsec:connection}
+
+The endogenous theory developed in this section nests the descriptive base model of Section~\ref{sec:methodology} and provides structural foundations for each diagnostic indicator.
+
+\begin{proposition}[Nesting the Base Model]
+\label{prop:nesting}
+The base-model OU process $d\pi_t = \kappa(\theta - \pi_t)\,dt + \sigma_\pi\, dW_t^\pi$ is recovered from the endogenous system~\eqref{eq:endo_pi} under the following conditions:
+\begin{enumerate}
+  \item The fair premium $\pi_t^*$ is approximately constant, i.e., the state $\Phi_t$ varies slowly relative to the premium mean-reversion timescale $1/\kappa$. Then $\theta \approx \bar{\pi}^*$, the steady-state fair premium.
+  \item The feedback gain $\mathcal{G}$ is small ($\mathcal{G} \ll 1$), so the effective mean-reversion speed $\kappa_{\mathrm{eff}} \approx \kappa$ and the system is well-approximated by the linearized OU.
+\end{enumerate}
+In this limit, the calibrated $\theta$ from Section~\ref{sec:methodology} provides an estimate of the steady-state fair premium $\bar{\pi}^*$.
+\end{proposition}
+
+\begin{proof}
+When $\pi_t^*$ is approximately constant at $\bar{\pi}^*$, equation~\eqref{eq:endo_pi} becomes $d\pi_t \approx \kappa(\bar{\pi}^* - \pi_t)\,dt + \sigma_\pi\, dW_t^\pi$, which is the base-model OU with $\theta = \bar{\pi}^*$. The condition $\mathcal{G} \ll 1$ ensures the linearization error is small.
+\end{proof}
+
+\begin{remark}[Structural Interpretation of Calibrated Parameters]
+\label{rem:structural_interpretation}
+The endogenous theory gives structural meaning to the base-model parameters:
+\begin{itemize}
+  \item $\theta$ (long-run mean premium) $\leftrightarrow$ steady-state fair premium $\bar{\pi}^*$, reflecting the time-averaged value of the accumulation option.
+  \item $\kappa$ (mean-reversion speed) $\leftrightarrow$ $\kappa_{\mathrm{eff}} = \kappa(1 - \mathcal{G})$, the net mean-reversion after accounting for reflexive feedback. The calibrated $\kappa$ thus underestimates the ``pure'' adjustment speed because reflexive feedback partially offsets mean-reversion.
+  \item $\sigma_\pi$ (premium volatility) $\leftrightarrow$ amplified volatility per~\eqref{eq:amplified_variance}. The calibrated $\sigma_\pi$ captures both exogenous noise and the reflexive amplification.
+  \item $\rho$ (BTC-premium correlation) $\leftrightarrow$ includes both a structural component (BTC price affects NAV and hence the fair premium) and a sentiment component.
+\end{itemize}
+\end{remark}
